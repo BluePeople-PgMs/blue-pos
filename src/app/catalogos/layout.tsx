@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RequiereSesion } from "@/components/RequiereSesion";
 import { SelectorCatalogo } from "@/components/SelectorCatalogo";
 
 export default function CatalogosLayout({
@@ -7,6 +8,7 @@ export default function CatalogosLayout({
   children: React.ReactNode;
 }) {
   return (
+    <RequiereSesion>
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="flex flex-col gap-5">
         <div className="flex items-center justify-between gap-4">
@@ -21,5 +23,6 @@ export default function CatalogosLayout({
       </header>
       {children}
     </main>
+    </RequiereSesion>
   );
 }

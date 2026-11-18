@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { MenuModulos } from "@/components/MenuModulos";
@@ -12,6 +13,7 @@ import {
 import { getSupabaseBrowser } from "@/lib/supabase";
 
 export function BarraSesion() {
+  const router = useRouter();
   const [usuario, setUsuario] = useState<User | null>(null);
   const [sesionLocal, setSesionLocal] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
@@ -58,6 +60,8 @@ export function BarraSesion() {
     borrarSesionLocal();
     setUsuario(null);
     setSesionLocal(null);
+    router.push("/login");
+    router.refresh();
   }
 
   if (!listo) {

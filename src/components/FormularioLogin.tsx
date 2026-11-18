@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { guardarSesionLocal } from "@/lib/sesionLocal";
@@ -210,12 +209,6 @@ export function FormularioLogin() {
               : "Registrarme"}
         </button>
       </form>
-
-      <p className="text-center text-sm text-muted sm:text-left">
-        <Link href="/" className="font-medium text-accent underline-offset-2 hover:underline">
-          Volver al inicio
-        </Link>
-      </p>
     </div>
   );
 }

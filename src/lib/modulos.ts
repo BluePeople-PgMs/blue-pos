@@ -12,6 +12,7 @@ export const modulos: Modulo[] = [
     resumen: "Inicio de sesión con supabase.auth.signInWithPassword y registro.",
     tablas: ["perfiles"],
     estado: "listo",
+    enlaces: [{ href: "/login", etiqueta: "Iniciar sesión" }],
   },
   {
     nombre: "Catálogos",

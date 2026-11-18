@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { leerSesionLocal } from "@/lib/sesionLocal";
+import { EVENTO_SESION, leerSesionLocal } from "@/lib/sesionLocal";
 import { getSupabaseBrowser } from "@/lib/supabase";
 
 import type { ReactNode } from "react";
@@ -16,26 +16,43 @@ export function RequiereSesion({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    if (leerSesionLocal()) {
-      setEstado("ok");
-      return;
-    }
+    let activo = true;
 
-    const supabase = getSupabaseBrowser();
-    if (!supabase) {
-      setEstado("sin_sesion");
-      return;
-    }
-
-    void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setEstado("ok");
-        return;
-      }
+    function sinSesion() {
+      if (!activo) return;
       setEstado("sin_sesion");
       const destino = encodeURIComponent(pathname);
       router.replace(`/login?siguiente=${destino}`);
-    });
+    }
+
+    function comprobar() {
+      if (leerSesionLocal()) {
+        if (activo) setEstado("ok");
+        return;
+      }
+
+      const supabase = getSupabaseBrowser();
+      if (!supabase) {
+        sinSesion();
+        return;
+      }
+
+      void supabase.auth.getUser().then(({ data }) => {
+        if (!activo) return;
+        if (data.user) {
+          setEstado("ok");
+          return;
+        }
+        sinSesion();
+      });
+    }
+
+    comprobar();
+    window.addEventListener(EVENTO_SESION, comprobar);
+    return () => {
+      activo = false;
+      window.removeEventListener(EVENTO_SESION, comprobar);
+    };
   }, [pathname, router]);
 
   if (estado === "cargando") {

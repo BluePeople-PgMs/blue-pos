@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { EstadoConexion } from "@/components/EstadoConexion";
+import { PuertaInicio } from "@/components/PuertaInicio";
 import { modulos } from "@/lib/modulos";
 
 export default function Home() {
   return (
+    <PuertaInicio>
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-3">
         <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
@@ -14,12 +16,8 @@ export default function Home() {
           Blue POS 2.0
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-muted">
-          Cascarón compartido para varias computadoras. El login ya está en{" "}
-          <Link href="/login" className="font-medium text-accent underline-offset-2 hover:underline">
-            /login
-          </Link>
-          . Tras entrar verás el menú de módulos arriba. Catálogos, combos y recetas
-          son públicos; inventario, ventas, pagos y cancelaciones piden sesión.
+          Cascarón compartido para varias computadoras. El acceso empieza en el
+          login. Después aparece el menú de módulos.
         </p>
       </header>
 
@@ -83,5 +81,6 @@ export default function Home() {
         </ul>
       </section>
     </main>
+    </PuertaInicio>
   );
 }

@@ -11,9 +11,10 @@ export const menuModulos: ItemMenu[] = [
   {
     nombre: "Catálogos",
     href: "/catalogos",
-    resumen: "Categorías, unidades, productos y cajas.",
+    resumen:
+      "Comidas preparadas y productos empacados de la trattoria.",
     tablas: ["categorias", "unidades", "productos", "cajas"],
-    requiereSesion: false,
+    requiereSesion: true,
   },
   {
     nombre: "Combos",
