@@ -3,6 +3,19 @@ import Link from "next/link";
 import { EstadoConexion } from "@/components/EstadoConexion";
 import { modulos } from "@/lib/modulos";
 
+function etiquetaModulo(nombre: string) {
+  if (nombre === "Inventario") {
+    return "Abrir entradas de mercancía";
+  }
+  if (nombre === "Catálogos") {
+    return "Abrir catálogos";
+  }
+  if (nombre === "Ventas") {
+    return "Abrir punto de venta";
+  }
+  return "Abrir módulo";
+}
+
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12">
@@ -57,11 +70,7 @@ export default function Home() {
                     href={modulo.ruta}
                     className="inline-flex rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
                   >
-                    {modulo.nombre === "Inventario"
-                      ? "Abrir entradas de mercancía"
-                      : modulo.nombre === "Catálogos"
-                        ? "Abrir catálogos"
-                        : "Abrir módulo"}
+                    {etiquetaModulo(modulo.nombre)}
                   </Link>
                 </div>
               ) : null}

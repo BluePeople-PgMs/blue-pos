@@ -1,18 +1,14 @@
 "use client";
 
+import { PuntoVenta } from "@/components/ventas/PuntoVenta";
 import { RequiereSesion } from "@/components/RequiereSesion";
-import { ModuloProtegidoPrueba } from "@/components/ModuloProtegidoPrueba";
 
 export default function VentasPage() {
   return (
-    <RequiereSesion>
-      {() => (
-        <ModuloProtegidoPrueba
-          titulo="Ventas"
-          tabla="ventas"
-          descripcion="Al cobrar, la venta es la salida de inventario. También se pueden cancelar."
-        />
-      )}
-    </RequiereSesion>
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
+      <RequiereSesion>
+        {(session) => <PuntoVenta session={session} />}
+      </RequiereSesion>
+    </main>
   );
 }

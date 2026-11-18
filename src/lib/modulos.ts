@@ -19,6 +19,8 @@ export const modulos: Modulo[] = [
     nombre: "Ventas",
     resumen: "Al cobrar, la venta es la salida de inventario. También se puede cancelar.",
     tablas: ["ventas", "venta_lineas", "pagos", "cancelaciones"],
+    ruta: "/ventas",
+    listo: true,
   },
   {
     nombre: "Inventario",
