@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-label="3 a 4 productos 20 por ciento">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4ebe7"/>
+      <stop offset="100%" style="stop-color:#fffdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="480" fill="url(#bg3)"/>
+  <g transform="translate(120,200)">
+    <circle cx="40" cy="40" r="36" fill="#0e6b62" opacity="0.25"/>
+    <circle cx="100" cy="40" r="36" fill="#0e6b62" opacity="0.4"/>
+    <circle cx="160" cy="40" r="36" fill="#0e6b62" opacity="0.55"/>
+    <circle cx="90" cy="100" r="28" fill="#0e6b62" opacity="0.35"/>
+  </g>
+  <text x="560" y="200" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#1b2430">34 productos en el combo</text>
+  <text x="560" y="280" font-family="system-ui,sans-serif" font-size="72" font-weight="800" fill="#0e6b62">20%</text>
+  <text x="560" y="330" font-family="system-ui,sans-serif" font-size="20" fill="#5e6874">ideal para armar paquetes medianos</text>
+</svg>

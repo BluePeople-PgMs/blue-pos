@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-label="1 producto 0 por ciento">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8ecd9"/>
+      <stop offset="100%" style="stop-color:#fffdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="480" fill="url(#bg1)"/>
+  <circle cx="200" cy="240" r="72" fill="#e3d9c8"/>
+  <text x="200" y="252" text-anchor="middle" font-family="system-ui,sans-serif" font-size="48" font-weight="700" fill="#8a4b12">1</text>
+  <text x="560" y="200" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#1b2430">1 producto en el combo</text>
+  <text x="560" y="260" font-family="system-ui,sans-serif" font-size="56" font-weight="800" fill="#8a4b12">0%</text>
+  <text x="560" y="320" font-family="system-ui,sans-serif" font-size="20" fill="#5e6874">Agrega al menos 2 productos para 10% de descuento</text>
+</svg>
