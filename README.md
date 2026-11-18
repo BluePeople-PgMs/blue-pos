@@ -22,12 +22,12 @@ La base rechaza un movimiento con el tipo mal escrito, una cantidad que no sea m
 
 ## Conectar otra computadora
 
-La base vive en el proyecto Supabase `blue-pos`. Quien creó el proyecto comparte solo estos dos valores, los mismos que están en `.env.local`:
+La base vive en el proyecto Supabase `blue-pos`. Los dos valores públicos ya están en [`.env.example`](.env.example):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-No compartas la service role key ni la contraseña de la base.
+Copia ese archivo a `.env.local`. No agregues la service role key ni la contraseña de la base.
 
 ```bash
 npm install
