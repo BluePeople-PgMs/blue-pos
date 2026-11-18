@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { EstadoConexion } from "@/components/EstadoConexion";
+import { HomeAcceso } from "@/components/HomeAcceso";
 import { modulos } from "@/lib/modulos";
 
 export default function Home() {
@@ -33,11 +34,15 @@ export default function Home() {
         <EstadoConexion />
       </Suspense>
 
+      <HomeAcceso />
+
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Módulos por construir</h2>
         <ul className="grid gap-4 sm:grid-cols-2">
           {modulos.map((modulo) => {
             const inventarioListo = modulo.nombre === "Inventario";
+            const loginListo = modulo.nombre === "Login";
+            const listo = inventarioListo || loginListo;
             return (
             <li
               key={modulo.nombre}
@@ -47,10 +52,10 @@ export default function Home() {
                 <h3 className="text-lg font-semibold">{modulo.nombre}</h3>
                 <span
                   className={`shrink-0 text-xs font-medium tracking-wide uppercase ${
-                    inventarioListo ? "text-accent" : "text-muted"
+                    listo ? "text-accent" : "text-muted"
                   }`}
                 >
-                  {inventarioListo ? "Disponible" : "Por construir"}
+                  {listo ? "Disponible" : "Por construir"}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">{modulo.resumen}</p>
@@ -70,6 +75,14 @@ export default function Home() {
                   className="mt-4 inline-block rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
                 >
                   Abrir entradas de mercancía
+                </Link>
+              ) : null}
+              {loginListo ? (
+                <Link
+                  href="/login"
+                  className="mt-4 inline-block rounded-lg border border-line bg-background px-3 py-2 text-sm font-semibold text-foreground"
+                >
+                  Ir al acceso
                 </Link>
               ) : null}
             </li>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useCallback, useEffect, useState } from "react";
@@ -92,6 +93,13 @@ export function RequiereSesion({ children }: RequiereSesionProps) {
         <p className="mt-1 text-sm leading-6 text-muted">
           Las entradas de mercancía y las existencias solo se guardan con una
           cuenta autenticada.
+        </p>
+        <p className="mt-3 text-sm text-muted">
+          También puedes{" "}
+          <Link href="/login" className="font-medium text-accent underline">
+            registrarte o iniciar sesión en la pantalla de acceso
+          </Link>
+          .
         </p>
         <form onSubmit={iniciarSesion} className="mt-5 flex max-w-md flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
