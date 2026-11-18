@@ -2,6 +2,8 @@ export type Modulo = {
   nombre: string;
   resumen: string;
   tablas: string[];
+  estado?: "listo";
+  enlaces?: { href: string; etiqueta: string }[];
 };
 
 export const modulos: Modulo[] = [
@@ -12,8 +14,14 @@ export const modulos: Modulo[] = [
   },
   {
     nombre: "Catálogos",
-    resumen: "Categorías, unidades, productos y cajas.",
+    resumen:
+      "Trattoria italiana: comidas preparadas en cocina y productos empacados de mostrador.",
     tablas: ["categorias", "unidades", "productos", "cajas"],
+    estado: "listo",
+    enlaces: [
+      { href: "/catalogos/comidas", etiqueta: "Comidas preparadas" },
+      { href: "/catalogos/productos", etiqueta: "Productos terminados" },
+    ],
   },
   {
     nombre: "Ventas",

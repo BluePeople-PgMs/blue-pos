@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { EstadoConexion } from "@/components/EstadoConexion";
 import { modulos } from "@/lib/modulos";
 
@@ -33,7 +34,7 @@ export default function Home() {
       </Suspense>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Módulos por construir</h2>
+        <h2 className="text-xl font-semibold">Módulos</h2>
         <ul className="grid gap-4 sm:grid-cols-2">
           {modulos.map((modulo) => (
             <li
@@ -42,11 +43,28 @@ export default function Home() {
             >
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-lg font-semibold">{modulo.nombre}</h3>
-                <span className="shrink-0 text-xs font-medium tracking-wide text-muted uppercase">
-                  Por construir
+                <span
+                  className={`shrink-0 text-xs font-medium tracking-wide uppercase ${
+                    modulo.estado === "listo" ? "text-accent" : "text-muted"
+                  }`}
+                >
+                  {modulo.estado === "listo" ? "Listo" : "Por construir"}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">{modulo.resumen}</p>
+              {modulo.enlaces ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {modulo.enlaces.map((enlace) => (
+                    <Link
+                      key={enlace.href}
+                      href={enlace.href}
+                      className="rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-white"
+                    >
+                      {enlace.etiqueta}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
               <ul className="mt-4 flex flex-wrap gap-2">
                 {modulo.tablas.map((tabla) => (
                   <li

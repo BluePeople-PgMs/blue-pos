@@ -29,7 +29,7 @@ export async function EstadoConexion() {
     <Estado
       tono="ok"
       titulo="Conectado"
-      detalle="La lectura de categorias respondió. Las pantallas de catálogo todavía no existen."
+      detalle="La lectura de categorias respondió."
     />
   );
 }
