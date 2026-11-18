@@ -42,7 +42,8 @@ export default function Home() {
           {modulos.map((modulo) => {
             const inventarioListo = modulo.nombre === "Inventario";
             const loginListo = modulo.nombre === "Login";
-            const listo = inventarioListo || loginListo;
+            const catalogosListo = modulo.nombre === "Catálogos";
+            const listo = inventarioListo || loginListo || catalogosListo;
             return (
             <li
               key={modulo.nombre}
@@ -83,6 +84,14 @@ export default function Home() {
                   className="mt-4 inline-block rounded-lg border border-line bg-background px-3 py-2 text-sm font-semibold text-foreground"
                 >
                   Ir al acceso
+                </Link>
+              ) : null}
+              {catalogosListo ? (
+                <Link
+                  href="/catalogos"
+                  className="mt-4 inline-block rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Abrir catálogos
                 </Link>
               ) : null}
             </li>

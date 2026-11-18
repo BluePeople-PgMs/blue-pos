@@ -70,6 +70,12 @@ export function BarraSesion() {
         </Link>
 
         <nav className="flex flex-wrap items-center gap-3 text-sm">
+          <Link
+            href="/catalogos"
+            className="font-medium text-accent hover:underline"
+          >
+            Catálogos
+          </Link>
           {session ? (
             <>
               <span className="text-muted">

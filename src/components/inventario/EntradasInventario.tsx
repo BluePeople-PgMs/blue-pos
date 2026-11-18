@@ -4,6 +4,8 @@ import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { SelectProducto } from "@/components/catalogos/selects";
+import { etiquetaProducto } from "@/lib/catalogos/etiquetas";
 
 type Producto = {
   id: string;
@@ -272,10 +274,6 @@ export function EntradasInventario({ session }: { session: Session }) {
     }).format(new Date(iso));
   }
 
-  function etiquetaProducto(nombre: string, codigo: string | null) {
-    return codigo ? `${nombre} (${codigo})` : nombre;
-  }
-
   return (
     <div className="flex flex-col gap-10">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -322,8 +320,11 @@ export function EntradasInventario({ session }: { session: Session }) {
         <h2 className="text-lg font-semibold">Nueva entrada</h2>
         {productos.length === 0 && !cargando ? (
           <p className="mt-3 text-sm text-muted">
-            No hay productos activos. Agrega productos en el catálogo antes de
-            registrar entradas.
+            No hay productos activos.{" "}
+            <Link href="/catalogos/productos" className="font-medium text-accent underline">
+              Agrega productos en el catálogo
+            </Link>{" "}
+            antes de registrar entradas.
           </p>
         ) : (
           <form
@@ -332,19 +333,12 @@ export function EntradasInventario({ session }: { session: Session }) {
           >
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Producto</span>
-              <select
-                required
+              <SelectProducto
                 value={productoId}
-                onChange={(e) => setProductoId(e.target.value)}
+                onChange={setProductoId}
+                opciones={productos}
                 disabled={cargando || guardando}
-                className="rounded-lg border border-line bg-background px-3 py-2"
-              >
-                {productos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {etiquetaProducto(p.nombre, p.codigo)}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Cantidad</span>
