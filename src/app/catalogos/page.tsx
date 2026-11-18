@@ -2,6 +2,11 @@ import Link from "next/link";
 
 const SECCIONES = [
   {
+    href: "/catalogos/lista",
+    titulo: "Lista de productos",
+    detalle: "Vista compartida para combos, inventario y ventas (solo lectura).",
+  },
+  {
     href: "/catalogos/categorias",
     titulo: "Categorías",
     detalle: "Agrupa productos y define el orden en listas.",
@@ -14,7 +19,7 @@ const SECCIONES = [
   {
     href: "/catalogos/productos",
     titulo: "Productos",
-    detalle: "Directo, preparado, insumo o combo.",
+    detalle: "Alta y edición: directo, preparado, insumo o combo.",
   },
   {
     href: "/catalogos/cajas",
@@ -34,12 +39,12 @@ export default function CatalogosHubPage() {
           Tablas maestras
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-muted">
-          Acceso público (sin login). Inventario y ventas reutilizan los mismos
-          selects de producto, categoría, unidad y caja.
+          Acceso público (sin login). Inventario, ventas y combos reutilizan los
+          mismos productos y selects de categoría, unidad y caja.
         </p>
         <Link
           href="/"
-          className="text-sm font-medium text-accent hover:underline w-fit"
+          className="w-fit text-sm font-medium text-accent hover:underline"
         >
           ← Inicio
         </Link>

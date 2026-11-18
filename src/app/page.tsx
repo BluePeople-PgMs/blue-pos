@@ -39,12 +39,7 @@ export default function Home() {
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Módulos por construir</h2>
         <ul className="grid gap-4 sm:grid-cols-2">
-          {modulos.map((modulo) => {
-            const inventarioListo = modulo.nombre === "Inventario";
-            const loginListo = modulo.nombre === "Login";
-            const catalogosListo = modulo.nombre === "Catálogos";
-            const listo = inventarioListo || loginListo || catalogosListo;
-            return (
+          {modulos.map((modulo) => (
             <li
               key={modulo.nombre}
               className="rounded-2xl border border-line bg-card px-5 py-5"
@@ -53,13 +48,33 @@ export default function Home() {
                 <h3 className="text-lg font-semibold">{modulo.nombre}</h3>
                 <span
                   className={`shrink-0 text-xs font-medium tracking-wide uppercase ${
-                    listo ? "text-accent" : "text-muted"
+                    modulo.listo ? "text-accent" : "text-muted"
                   }`}
                 >
-                  {listo ? "Disponible" : "Por construir"}
+                  {modulo.listo ? "Listo" : "Por construir"}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">{modulo.resumen}</p>
+              {modulo.ruta ? (
+                <div className="mt-3">
+                  <Link
+                    href={modulo.ruta}
+                    className={
+                      modulo.nombre === "Login"
+                        ? "inline-flex rounded-lg border border-line bg-background px-3 py-2 text-sm font-semibold text-foreground"
+                        : "inline-flex rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
+                    }
+                  >
+                    {modulo.nombre === "Inventario"
+                      ? "Abrir entradas de mercancía"
+                      : modulo.nombre === "Login"
+                        ? "Ir al acceso"
+                        : modulo.nombre === "Catálogos"
+                          ? "Abrir catálogos"
+                          : "Abrir módulo"}
+                  </Link>
+                </div>
+              ) : null}
               <ul className="mt-4 flex flex-wrap gap-2">
                 {modulo.tablas.map((tabla) => (
                   <li
@@ -70,33 +85,8 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              {inventarioListo ? (
-                <Link
-                  href="/inventario"
-                  className="mt-4 inline-block rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
-                >
-                  Abrir entradas de mercancía
-                </Link>
-              ) : null}
-              {loginListo ? (
-                <Link
-                  href="/login"
-                  className="mt-4 inline-block rounded-lg border border-line bg-background px-3 py-2 text-sm font-semibold text-foreground"
-                >
-                  Ir al acceso
-                </Link>
-              ) : null}
-              {catalogosListo ? (
-                <Link
-                  href="/catalogos"
-                  className="mt-4 inline-block rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
-                >
-                  Abrir catálogos
-                </Link>
-              ) : null}
             </li>
-            );
-          })}
+          ))}
         </ul>
       </section>
     </main>

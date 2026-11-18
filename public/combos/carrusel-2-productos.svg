@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-label="2 productos 10 por ciento">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e5f4f1"/>
+      <stop offset="100%" style="stop-color:#fffdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="480" fill="url(#bg2)"/>
+  <circle cx="160" cy="240" r="56" fill="#0e6b62" opacity="0.2"/>
+  <circle cx="240" cy="240" r="56" fill="#0e6b62" opacity="0.35"/>
+  <text x="200" y="252" text-anchor="middle" font-family="system-ui,sans-serif" font-size="40" font-weight="700" fill="#0e6b62">2</text>
+  <text x="560" y="200" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#1b2430">2 productos en el combo</text>
+  <text x="560" y="280" font-family="system-ui,sans-serif" font-size="72" font-weight="800" fill="#0e6b62">10%</text>
+  <text x="560" y="330" font-family="system-ui,sans-serif" font-size="20" fill="#5e6874">de descuento sobre la suma de componentes</text>
+</svg>

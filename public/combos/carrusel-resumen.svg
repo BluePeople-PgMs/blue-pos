@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-label="Resumen de descuentos por combo">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e5f4f1"/>
+      <stop offset="100%" style="stop-color:#fffdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="480" fill="url(#bg)"/>
+  <rect x="48" y="48" width="864" height="384" rx="24" fill="#fffdf8" stroke="#e3d9c8" stroke-width="2"/>
+  <text x="480" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="36" font-weight="700" fill="#0e6b62">Descuentos en combos</text>
+  <text x="480" y="155" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#5e6874">Más productos distintos, mayor ahorro</text>
+  <rect x="120" y="200" width="720" height="52" rx="8" fill="#0e6b62"/>
+  <text x="300" y="234" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="600" fill="#ffffff">Productos en el combo</text>
+  <text x="660" y="234" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="600" fill="#ffffff">Descuento</text>
+  <g font-family="system-ui,sans-serif" font-size="20" fill="#1b2430">
+    <rect x="120" y="260" width="720" height="44" fill="#f3efe6"/>
+    <text x="300" y="288" text-anchor="middle">1</text>
+    <text x="660" y="288" text-anchor="middle" fill="#5e6874">0%</text>
+    <rect x="120" y="304" width="720" height="44" fill="#ffffff"/>
+    <text x="300" y="332" text-anchor="middle">2</text>
+    <text x="660" y="332" text-anchor="middle" font-weight="600" fill="#0e6b62">10%</text>
+    <rect x="120" y="348" width="720" height="44" fill="#f3efe6"/>
+    <text x="300" y="376" text-anchor="middle">34</text>
+    <text x="660" y="376" text-anchor="middle" font-weight="600" fill="#0e6b62">20%</text>
+    <rect x="120" y="392" width="720" height="44" fill="#ffffff"/>
+    <text x="300" y="420" text-anchor="middle">5+</text>
+    <text x="660" y="420" text-anchor="middle" font-weight="700" fill="#0e6b62">30%</text>
+  </g>
+</svg>
