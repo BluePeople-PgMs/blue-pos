@@ -9,8 +9,9 @@ export type Modulo = {
 export const modulos: Modulo[] = [
   {
     nombre: "Login",
-    resumen: "Primera tarea del equipo: iniciar sesión con Supabase Auth.",
+    resumen: "Inicio de sesión con supabase.auth.signInWithPassword y registro.",
     tablas: ["perfiles"],
+    estado: "listo",
   },
   {
     nombre: "Catálogos",

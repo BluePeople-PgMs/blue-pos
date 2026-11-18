@@ -22,13 +22,11 @@ const catalogos = [
 export default function CatalogosPage() {
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-3xl font-semibold tracking-tight">
-        Trattoria Blue
-      </h1>
+      <h1 className="text-3xl font-semibold tracking-tight">Trattoria Blue</h1>
       <p className="max-w-2xl text-base leading-7 text-muted">
-        Dos catálogos del mismo restaurante italiano. Las comidas se preparan
-        en cocina. Los productos terminados se venden empacados, como la pasta
-        seca y la pizza congelada.
+        Dos catálogos del mismo restaurante italiano. Las comidas se preparan en
+        cocina. Los productos terminados se venden empacados, como la pasta seca
+        y la pizza congelada.
       </p>
       <ul className="grid gap-4 sm:grid-cols-2">
         {catalogos.map((catalogo) => (

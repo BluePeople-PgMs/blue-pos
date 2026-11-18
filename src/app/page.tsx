@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { EstadoConexion } from "@/components/EstadoConexion";
 import { modulos } from "@/lib/modulos";
 
@@ -14,9 +14,12 @@ export default function Home() {
           Blue POS 2.0
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-muted">
-          Cascarón compartido para varias computadoras. La primera tarea del
-          equipo es el login. Después construye catálogos, entradas de
-          inventario, ventas y cancelaciones.
+          Cascarón compartido para varias computadoras. El login ya está en{" "}
+          <Link href="/login" className="font-medium text-accent underline-offset-2 hover:underline">
+            /login
+          </Link>
+          . Tras entrar verás el menú de módulos arriba. Catálogos, combos y recetas
+          son públicos; inventario, ventas, pagos y cancelaciones piden sesión.
         </p>
       </header>
 
