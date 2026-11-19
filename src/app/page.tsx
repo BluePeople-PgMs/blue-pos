@@ -13,6 +13,9 @@ function etiquetaModulo(nombre: string) {
   if (nombre === "Ventas") {
     return "Abrir punto de venta";
   }
+  if (nombre === "Recetas") {
+    return "Abrir recetas";
+  }
   return "Abrir módulo";
 }
 

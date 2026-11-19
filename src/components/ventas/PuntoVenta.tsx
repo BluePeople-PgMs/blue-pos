@@ -1,7 +1,7 @@
 "use client";
 
 import { getSupabaseBrowser } from "@/lib/supabase";
-import type { Session } from "@supabase/supabase-js";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -55,6 +55,71 @@ function formatoMoneda(monto: number) {
     style: "currency",
     currency: "MXN",
   }).format(monto);
+}
+
+type DatosBaseVentas =
+  | { error: string }
+  | {
+      listaCajas: Caja[];
+      listaProductos: Producto[];
+      existenciasFilas: { producto_id: string; cantidad: number | string }[];
+      cobradas: {
+        id: string;
+        folio: string | null;
+        total: number | string;
+        created_at: string;
+      }[];
+      ventaAbiertaId: string | null;
+    };
+
+async function consultarDatosBaseVentas(
+  client: SupabaseClient,
+): Promise<DatosBaseVentas> {
+  const [cajasRes, productosRes, existenciasRes, cobradasRes, abiertaRes] =
+    await Promise.all([
+      client.from("cajas").select("id, nombre").eq("activa", true).order("nombre"),
+      client
+        .from("productos")
+        .select("id, nombre, codigo, precio")
+        .eq("activo", true)
+        .order("nombre"),
+      client.from("existencias").select("producto_id, cantidad"),
+      client
+        .from("ventas")
+        .select("id, folio, total, created_at")
+        .eq("estado", "cobrada")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      client
+        .from("ventas")
+        .select("id")
+        .eq("estado", "abierta")
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
+
+  if (cajasRes.error) return { error: cajasRes.error.message };
+  if (productosRes.error) return { error: productosRes.error.message };
+  if (existenciasRes.error) return { error: existenciasRes.error.message };
+  if (cobradasRes.error) return { error: cobradasRes.error.message };
+
+  const listaProductos = (productosRes.data ?? []).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    codigo: p.codigo,
+    precio: p.precio == null ? null : Number(p.precio),
+  }));
+
+  return {
+    listaCajas: cajasRes.data ?? [],
+    listaProductos,
+    existenciasFilas: existenciasRes.data ?? [],
+    cobradas: cobradasRes.data ?? [],
+    ventaAbiertaId:
+      abiertaRes.error || !abiertaRes.data?.[0]
+        ? null
+        : abiertaRes.data[0].id,
+  };
 }
 
 export function PuntoVenta({ session }: { session: Session }) {
@@ -120,94 +185,69 @@ export function PuntoVenta({ session }: { session: Session }) {
     [supabase],
   );
 
-  const recargarBase = useCallback(async () => {
-    setCargando(true);
-    setError(null);
+  const aplicarDatosBase = useCallback(
+    async (datos: DatosBaseVentas) => {
+      if ("error" in datos) {
+        setError(datos.error);
+        setCargando(false);
+        return;
+      }
 
-    const [cajasRes, productosRes, existenciasRes, cobradasRes, abiertaRes] =
-      await Promise.all([
-        supabase.from("cajas").select("id, nombre").eq("activa", true).order("nombre"),
-        supabase
-          .from("productos")
-          .select("id, nombre, codigo, precio")
-          .eq("activo", true)
-          .order("nombre"),
-        supabase.from("existencias").select("producto_id, cantidad"),
-        supabase
-          .from("ventas")
-          .select("id, folio, total, created_at")
-          .eq("estado", "cobrada")
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("ventas")
-          .select("id, folio, total, caja_id")
-          .eq("estado", "abierta")
-          .order("created_at", { ascending: false })
-          .limit(1),
-      ]);
+      const { listaCajas, listaProductos, existenciasFilas, cobradas, ventaAbiertaId } =
+        datos;
 
-    if (cajasRes.error) {
-      setError(cajasRes.error.message);
+      setCajas(listaCajas);
+      setCajaId((prev) => prev || listaCajas[0]?.id || "");
+      setProductos(listaProductos);
+      setProductoId((prev) => prev || listaProductos[0]?.id || "");
+      setExistencias(
+        new Map(
+          existenciasFilas.map((f) => [f.producto_id, Number(f.cantidad)]),
+        ),
+      );
+      setVentasCobradas(
+        cobradas.map((v) => ({
+          id: v.id,
+          folio: v.folio,
+          total: Number(v.total),
+          created_at: v.created_at,
+        })),
+      );
+
+      if (ventaAbiertaId) {
+        await cargarVentaAbierta(ventaAbiertaId);
+      } else {
+        setVenta(null);
+        setLineas([]);
+      }
+
       setCargando(false);
-      return;
-    }
-    if (productosRes.error) {
-      setError(productosRes.error.message);
-      setCargando(false);
-      return;
-    }
-    if (existenciasRes.error) {
-      setError(existenciasRes.error.message);
-      setCargando(false);
-      return;
-    }
-    if (cobradasRes.error) {
-      setError(cobradasRes.error.message);
-      setCargando(false);
-      return;
-    }
+    },
+    [cargarVentaAbierta],
+  );
 
-    const listaCajas = cajasRes.data ?? [];
-    const listaProductos = (productosRes.data ?? []).map((p) => ({
-      ...p,
-      precio: p.precio == null ? null : Number(p.precio),
-    }));
-
-    setCajas(listaCajas);
-    setCajaId((prev) => prev || listaCajas[0]?.id || "");
-    setProductos(listaProductos);
-    setProductoId((prev) => prev || listaProductos[0]?.id || "");
-    setExistencias(
-      new Map(
-        (existenciasRes.data ?? []).map((f) => [
-          f.producto_id,
-          Number(f.cantidad),
-        ]),
-      ),
-    );
-    setVentasCobradas(
-      (cobradasRes.data ?? []).map((v) => ({
-        id: v.id,
-        folio: v.folio,
-        total: Number(v.total),
-        created_at: v.created_at,
-      })),
-    );
-
-    if (!abiertaRes.error && abiertaRes.data?.[0]) {
-      await cargarVentaAbierta(abiertaRes.data[0].id);
-    } else {
-      setVenta(null);
-      setLineas([]);
-    }
-
-    setCargando(false);
-  }, [cargarVentaAbierta, supabase]);
+  const recargarBase = useCallback(
+    async (mostrarCarga = false) => {
+      if (mostrarCarga) {
+        setCargando(true);
+        setError(null);
+      }
+      const datos = await consultarDatosBaseVentas(supabase);
+      await aplicarDatosBase(datos);
+    },
+    [aplicarDatosBase, supabase],
+  );
 
   useEffect(() => {
-    void recargarBase();
-  }, [recargarBase, session.access_token]);
+    let activo = true;
+    void consultarDatosBaseVentas(supabase).then((datos) => {
+      if (!activo) return;
+      void aplicarDatosBase(datos);
+    });
+    return () => {
+      activo = false;
+    };
+  }, [aplicarDatosBase, session.user.id, supabase]);
 
   const productosPorId = new Map(productos.map((p) => [p.id, p]));
 
@@ -493,7 +533,7 @@ export function PuntoVenta({ session }: { session: Session }) {
     setMensaje(`Venta cobrada. Total: ${formatoMoneda(total)}`);
     setVenta(null);
     setLineas([]);
-    await recargarBase();
+    await recargarBase(true);
   }
 
   async function cancelarVenta(ventaId: string) {
@@ -590,7 +630,7 @@ export function PuntoVenta({ session }: { session: Session }) {
 
     setProcesando(false);
     setMensaje("Venta cancelada. Las existencias se devolvieron.");
-    await recargarBase();
+    await recargarBase(true);
   }
 
   async function cerrarSesion() {

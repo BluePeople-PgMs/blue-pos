@@ -2,6 +2,8 @@ import { getSupabaseBrowser } from "@/lib/supabase";
 
 /** Misma convención que el comentario del cascarón en `productos.tipo`. */
 export const TIPO_PRODUCTO_COMBO = "combo";
+export const TIPO_PRODUCTO_PREPARADO = "preparado";
+export const TIPO_PRODUCTO_INSUMO = "insumo";
 
 export type ProductoCatalogo = {
   id: string;
@@ -129,6 +131,26 @@ export async function listarCombosCatalogo(): Promise<{
 }> {
   return listarProductosCatalogoResumen({
     tipo: TIPO_PRODUCTO_COMBO,
+    soloActivos: true,
+  });
+}
+
+export async function listarPreparadosCatalogo(): Promise<{
+  data: ProductoCatalogoResumen[] | null;
+  error: CatalogoError | null;
+}> {
+  return listarProductosCatalogoResumen({
+    tipo: TIPO_PRODUCTO_PREPARADO,
+    soloActivos: true,
+  });
+}
+
+export async function listarInsumosCatalogo(): Promise<{
+  data: ProductoCatalogoResumen[] | null;
+  error: CatalogoError | null;
+}> {
+  return listarProductosCatalogoResumen({
+    tipo: TIPO_PRODUCTO_INSUMO,
     soloActivos: true,
   });
 }

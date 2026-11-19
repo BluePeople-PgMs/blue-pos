@@ -109,6 +109,12 @@ export function ListaProductosCatalogo() {
         <Link href="/combos" className="font-semibold text-accent hover:underline">
           Ir a Combos
         </Link>
+        {" · "}
+        Preparados e insumos usan{" "}
+        <Link href="/recetas" className="font-semibold text-accent hover:underline">
+          Recetas
+        </Link>
+        .
       </p>
 
       {cargando ? (
