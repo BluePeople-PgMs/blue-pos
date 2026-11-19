@@ -39,7 +39,7 @@ export default function CatalogosHubPage() {
           Tablas maestras
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-muted">
-          Acceso público (sin login). Inventario, ventas y combos reutilizan los
+          Inventario, ventas y combos reutilizan los
           mismos productos y selects de categoría, unidad y caja.
         </p>
         <Link

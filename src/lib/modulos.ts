@@ -8,13 +8,6 @@ export type Modulo = {
 
 export const modulos: Modulo[] = [
   {
-    nombre: "Login",
-    resumen: "Primera tarea del equipo: iniciar sesión con Supabase Auth.",
-    tablas: ["perfiles"],
-    ruta: "/login",
-    listo: true,
-  },
-  {
     nombre: "Catálogos",
     resumen:
       "CRUD de categorías, unidades, productos y cajas; lista compartida para combos e inventario.",

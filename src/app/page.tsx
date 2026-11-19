@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { EstadoConexion } from "@/components/EstadoConexion";
-import { HomeAcceso } from "@/components/HomeAcceso";
 import { modulos } from "@/lib/modulos";
 
 export default function Home() {
@@ -15,9 +14,8 @@ export default function Home() {
           Blue POS 2.0
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-muted">
-          Cascarón compartido para varias computadoras. La primera tarea del
-          equipo es el login. Después construye catálogos, entradas de
-          inventario, ventas y cancelaciones.
+          Cascarón compartido para varias computadoras. Desde aquí se abren
+          catálogos, entradas de inventario, ventas y cancelaciones.
         </p>
       </header>
 
@@ -33,8 +31,6 @@ export default function Home() {
       >
         <EstadoConexion />
       </Suspense>
-
-      <HomeAcceso />
 
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Módulos por construir</h2>
@@ -59,19 +55,13 @@ export default function Home() {
                 <div className="mt-3">
                   <Link
                     href={modulo.ruta}
-                    className={
-                      modulo.nombre === "Login"
-                        ? "inline-flex rounded-lg border border-line bg-background px-3 py-2 text-sm font-semibold text-foreground"
-                        : "inline-flex rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
-                    }
+                    className="inline-flex rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
                   >
                     {modulo.nombre === "Inventario"
                       ? "Abrir entradas de mercancía"
-                      : modulo.nombre === "Login"
-                        ? "Ir al acceso"
-                        : modulo.nombre === "Catálogos"
-                          ? "Abrir catálogos"
-                          : "Abrir módulo"}
+                      : modulo.nombre === "Catálogos"
+                        ? "Abrir catálogos"
+                        : "Abrir módulo"}
                   </Link>
                 </div>
               ) : null}

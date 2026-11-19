@@ -89,12 +89,21 @@ export function LoginForm() {
       }
 
       if (!data.session) {
-        setAviso(
-          "Cuenta creada. Si el proyecto pide confirmar el correo, revisa tu bandeja y luego inicia sesión.",
-        );
-        setModo("entrar");
-        setEnviando(false);
-        return;
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: correo,
+          password,
+        });
+
+        if (signInError) {
+          setError(
+            signInError.message === "Email not confirmed"
+              ? "La cuenta se creó, pero este proyecto de Supabase exige confirmar el correo antes de iniciar sesión y no entrega esa sesión."
+              : signInError.message,
+          );
+          setModo("entrar");
+          setEnviando(false);
+          return;
+        }
       }
     }
 
