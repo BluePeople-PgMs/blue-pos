@@ -3,7 +3,7 @@ import { CatalogoVista } from "@/components/CatalogoVista";
 import { leerCatalogo } from "@/lib/catalogo";
 
 export const metadata = {
-  title: "Productos terminados · Blue POS 2.0",
+  title: "Productos terminados · Trattoria Blue",
 };
 
 export default function ProductosPage() {

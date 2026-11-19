@@ -46,7 +46,7 @@ function Estado({
   const tonoClase = {
     aviso: "border-warn/30 bg-warn-soft text-warn",
     error: "border-danger/30 bg-danger-soft text-danger",
-    ok: "border-accent/30 bg-accent-soft text-accent",
+    ok: "border-olive/30 bg-olive-soft text-olive",
   }[tono];
 
   return (

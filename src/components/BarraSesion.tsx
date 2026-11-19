@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { LogoPizza } from "@/components/LogoPizza";
 import { MenuModulos } from "@/components/MenuModulos";
 import {
   borrarSesionLocal,
@@ -69,10 +70,22 @@ export function BarraSesion() {
   }
 
   return (
-    <header className="border-b border-line bg-card/80">
+    <header className="border-b border-line bg-card/90">
+      <div
+        aria-hidden="true"
+        className="h-1.5 bg-[linear-gradient(90deg,#3d6b45_0_33%,#f4efe6_33%_66%,#7a1f24_66%_100%)]"
+      />
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-3 text-sm">
-        <Link href="/" className="font-semibold text-foreground">
-          Blue POS 2.0
+        <Link href="/" className="flex items-center gap-2.5">
+          <LogoPizza className="size-9 shrink-0" />
+          <span className="flex flex-col">
+          <span className="font-display text-[1.7rem] leading-none font-semibold tracking-tight text-foreground">
+            Trattoria Blue
+          </span>
+          <span className="mt-1 text-[0.68rem] font-medium tracking-[0.18em] text-muted uppercase">
+            Punto de venta
+          </span>
+          </span>
         </Link>
         <nav className="flex flex-wrap items-center gap-3">
           {sesionActiva ? (

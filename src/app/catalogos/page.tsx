@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { LogoPizza } from "@/components/LogoPizza";
 
 export const metadata = {
-  title: "Catálogos · Blue POS 2.0",
+  title: "Catálogos · Trattoria Blue",
 };
 
 const catalogos = [
@@ -22,7 +23,10 @@ const catalogos = [
 export default function CatalogosPage() {
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-3xl font-semibold tracking-tight">Trattoria Blue</h1>
+      <h1 className="flex items-center gap-3 text-3xl font-semibold tracking-tight">
+        <LogoPizza className="size-10 shrink-0" />
+        Trattoria Blue
+      </h1>
       <p className="max-w-2xl text-base leading-7 text-muted">
         Dos catálogos del mismo restaurante italiano. Las comidas se preparan en
         cocina. Los productos terminados se venden empacados, como la pasta seca

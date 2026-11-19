@@ -141,13 +141,27 @@ async function main() {
 
   await insertarEnLotes(supabase, "productos", productosNuevos);
 
+  const codigosVigentes = new Set(productos.map((producto) => producto.codigo));
+  const sobrantes = (productosActuales.data ?? [])
+    .map((fila) => fila.codigo)
+    .filter(
+      (codigo): codigo is string =>
+        Boolean(codigo) && !codigosVigentes.has(codigo),
+    );
+
+  for (let inicio = 0; inicio < sobrantes.length; inicio += 40) {
+    const lote = sobrantes.slice(inicio, inicio + 40);
+    const { error } = await supabase.from("productos").delete().in("codigo", lote);
+    if (error) throw new Error(`productos: ${error.message}`);
+  }
+
   const comidas = productos.filter((producto) => producto.tipo === "preparado");
   const terminados = productos.filter((producto) => producto.tipo === "directo");
   console.log(
     `Listo. ${categoriasNuevas.length} categorías nuevas, ${unidadesNuevas.length} unidades nuevas, ${productosNuevos.length} productos nuevos.`,
   );
   console.log(
-    `Catálogo: ${comidas.length} comidas preparadas y ${terminados.length} productos terminados.`,
+    `Catálogo: ${comidas.length} comidas preparadas y ${terminados.length} productos terminados. Se quitaron ${sobrantes.length}.`,
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { LogoPizza } from "@/components/LogoPizza";
 import { guardarSesionLocal } from "@/lib/sesionLocal";
 import { getSupabaseBrowser } from "@/lib/supabase";
 
@@ -99,15 +100,11 @@ export function FormularioLogin() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-8">
       <header className="flex flex-col gap-2 text-center sm:text-left">
-        <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
-          Acceso
+        <p className="flex items-center justify-center gap-2 text-sm font-semibold tracking-[0.14em] text-accent uppercase sm:justify-start">
+          <LogoPizza className="size-5" />
+          Trattoria Blue
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">Iniciar sesión</h1>
-        <p className="text-sm leading-6 text-muted">
-          Supabase Auth guarda la cuenta. Al registrarte, la tabla{" "}
-          <span className="font-mono text-foreground">perfiles</span> se llena
-          sola.
-        </p>
       </header>
 
       <div

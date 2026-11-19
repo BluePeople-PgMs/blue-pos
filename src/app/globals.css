@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3efe6;
-  --foreground: #1b2430;
-  --card: #fffdf8;
-  --line: #e3d9c8;
-  --muted: #5e6874;
-  --accent: #0e6b62;
-  --accent-soft: #e5f4f1;
-  --warn: #8a4b12;
+  --background: #f4efe6;
+  --foreground: #2c1812;
+  --card: #fffaf4;
+  --line: #e6d5c8;
+  --muted: #6e564c;
+  --accent: #7a1f24;
+  --accent-soft: #f6e7e3;
+  --warn: #6b4f1d;
   --warn-soft: #f8ecd9;
-  --danger: #8f2d2d;
-  --danger-soft: #f8e6e4;
+  --danger: #6e2218;
+  --danger-soft: #f8e6e2;
+  --olive: #3d6b45;
+  --olive-soft: #e7f0e6;
 }
 
 @theme inline {
@@ -26,12 +28,22 @@
   --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --font-sans: var(--font-geist-sans);
+  --color-olive: var(--olive);
+  --color-olive-soft: var(--olive-soft);
+  --font-sans: var(--font-source);
+  --font-display: var(--font-cormorant);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Source Sans 3", Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  font-weight: 600;
 }

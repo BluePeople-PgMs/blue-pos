@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { EstadoConexion } from "@/components/EstadoConexion";
+import { LogoPizza } from "@/components/LogoPizza";
 import { PuertaInicio } from "@/components/PuertaInicio";
 import { modulos } from "@/lib/modulos";
 
@@ -10,14 +11,15 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-3">
         <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
-          Punto de venta
+          Cucina e dispensa
         </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-          Blue POS 2.0
+        <h1 className="flex items-center gap-3 text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
+          <LogoPizza className="size-12 shrink-0 sm:size-14" />
+          Trattoria Blue
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-muted">
-          Cascarón compartido para varias computadoras. El acceso empieza en el
-          login. Después aparece el menú de módulos.
+          Punto de venta de la trattoria. El acceso empieza en el login.
+          Después aparece el menú de módulos.
         </p>
       </header>
 
