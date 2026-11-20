@@ -27,6 +27,46 @@ function relacionUno<T>(
   return Array.isArray(rel) ? (rel[0] ?? null) : rel;
 }
 
+const COLUMNAS_PRODUCTO =
+  "id, nombre, tipo, categoria_id, unidad_id, precio, codigo, activo, created_at";
+
+type ProductoBase = Omit<ProductoFila, "categorias" | "unidades">;
+
+/** La base remota no tiene la FK productos → categorias, así que PostgREST no puede embeberla. */
+async function listarProductos(
+  supabase: NonNullable<ReturnType<typeof getSupabaseBrowser>>,
+): Promise<{ filas: ProductoFila[]; error: string | null }> {
+  const [productos, categorias, unidades] = await Promise.all([
+    supabase.from("productos").select(COLUMNAS_PRODUCTO).order("nombre"),
+    supabase.from("categorias").select("id, nombre"),
+    supabase.from("unidades").select("id, abreviatura"),
+  ]);
+
+  const fallo = productos.error ?? categorias.error ?? unidades.error;
+  if (fallo) {
+    return { filas: [], error: fallo.message };
+  }
+
+  const nombreCategoria = new Map(
+    (categorias.data ?? []).map((fila) => [fila.id, fila.nombre]),
+  );
+  const abreviaturaUnidad = new Map(
+    (unidades.data ?? []).map((fila) => [fila.id, fila.abreviatura]),
+  );
+
+  const filas = ((productos.data ?? []) as ProductoBase[]).map((fila) => ({
+    ...fila,
+    categorias: nombreCategoria.has(fila.categoria_id ?? "")
+      ? { nombre: nombreCategoria.get(fila.categoria_id ?? "") ?? "" }
+      : null,
+    unidades: abreviaturaUnidad.has(fila.unidad_id ?? "")
+      ? { abreviatura: abreviaturaUnidad.get(fila.unidad_id ?? "") ?? "" }
+      : null,
+  }));
+
+  return { filas, error: null };
+}
+
 export function ProductosCatalogo() {
   const supabase = getSupabaseBrowser();
   const [filas, setFilas] = useState<ProductoFila[]>([]);
@@ -53,17 +93,12 @@ export function ProductosCatalogo() {
       setCargando(true);
     }
     setError(null);
-    const { data, error: qError } = await supabase
-      .from("productos")
-      .select(
-        "id, nombre, tipo, categoria_id, unidad_id, precio, codigo, activo, created_at, categorias(nombre), unidades(abreviatura)",
-      )
-      .order("nombre");
+    const { filas: siguientes, error: qError } = await listarProductos(supabase);
     if (qError) {
-      setError(qError.message);
+      setError(qError);
       setFilas([]);
     } else {
-      setFilas((data ?? []) as ProductoFila[]);
+      setFilas(siguientes);
     }
     setCargando(false);
   }, [supabase]);
@@ -74,20 +109,15 @@ export function ProductosCatalogo() {
     }
     let activo = true;
     void (async () => {
-      const { data, error: qError } = await supabase
-        .from("productos")
-        .select(
-          "id, nombre, tipo, categoria_id, unidad_id, precio, codigo, activo, created_at, categorias(nombre), unidades(abreviatura)",
-        )
-        .order("nombre");
+      const { filas: siguientes, error: qError } = await listarProductos(supabase);
       if (!activo) {
         return;
       }
       if (qError) {
-        setError(qError.message);
+        setError(qError);
         setFilas([]);
       } else {
-        setFilas((data ?? []) as ProductoFila[]);
+        setFilas(siguientes);
       }
       setCargando(false);
     })();
