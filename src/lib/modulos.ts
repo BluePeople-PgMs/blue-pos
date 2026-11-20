@@ -49,4 +49,18 @@ export const modulos: Modulo[] = [
     resumen: "Qué insumos lleva un producto preparado.",
     tablas: ["recetas", "receta_insumos"],
   },
+  {
+    nombre: "Pagos",
+    resumen: "Consulta de cobros ligados al folio de venta.",
+    tablas: ["pagos"],
+    estado: "listo",
+    enlaces: [{ href: "/pagos", etiqueta: "Historial de pagos" }],
+  },
+  {
+    nombre: "Cancelaciones",
+    resumen: "Consulta de ventas cobradas canceladas y motivos.",
+    tablas: ["cancelaciones"],
+    estado: "listo",
+    enlaces: [{ href: "/cancelaciones", etiqueta: "Historial" }],
+  },
 ];

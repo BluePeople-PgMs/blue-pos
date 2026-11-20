@@ -5,8 +5,9 @@ import {
   leerInventario,
   registrarEntrada,
   type CajaInventario,
-  type EntradaReciente,
+  type MovimientoReciente,
   type ProductoInventario,
+  type TipoMovimientoInventario,
 } from "@/lib/inventario";
 
 function normalizar(valor: string) {
@@ -28,13 +29,19 @@ function etiquetaTipo(tipo: string) {
   return tipo;
 }
 
+function etiquetaMovimiento(tipo: TipoMovimientoInventario) {
+  if (tipo === "entrada") return { texto: "Entrada", signo: "+" as const };
+  if (tipo === "salida_venta") return { texto: "Salida venta", signo: "−" as const };
+  return { texto: "Cancelación", signo: "+" as const };
+}
+
 export function InventarioVista() {
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
   const [puedeCapturar, setPuedeCapturar] = useState(false);
   const [productos, setProductos] = useState<ProductoInventario[]>([]);
   const [cajas, setCajas] = useState<CajaInventario[]>([]);
-  const [entradas, setEntradas] = useState<EntradaReciente[]>([]);
+  const [movimientos, setMovimientos] = useState<MovimientoReciente[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [origen, setOrigen] = useState("Todos");
@@ -51,7 +58,7 @@ export function InventarioVista() {
     setPuedeCapturar(datos.sesion);
     setProductos(datos.productos);
     setCajas(datos.cajas);
-    setEntradas(datos.entradas);
+    setMovimientos(datos.movimientos);
     setCargando(false);
   }
 
@@ -63,7 +70,7 @@ export function InventarioVista() {
       setPuedeCapturar(datos.sesion);
       setProductos(datos.productos);
       setCajas(datos.cajas);
-      setEntradas(datos.entradas);
+      setMovimientos(datos.movimientos);
       setCargando(false);
     });
     return () => {
@@ -241,27 +248,41 @@ export function InventarioVista() {
         </div>
       </form>
 
-      {entradas.length > 0 ? (
+      {movimientos.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Entradas recientes</h2>
+          <h2 className="text-lg font-semibold">Movimientos recientes</h2>
+          <p className="text-sm text-muted">
+            Entradas suman existencia; cobros restan; cancelaciones devuelven.
+          </p>
           <ul className="flex flex-col gap-2">
-            {entradas.map((entrada) => (
-              <li
-                key={entrada.id}
-                className="flex items-baseline justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm"
-              >
-                <span>
-                  {entrada.producto}
-                  {entrada.nota ? (
-                    <span className="text-muted"> · {entrada.nota}</span>
-                  ) : null}
-                </span>
-                <span className="shrink-0 font-medium">
-                  +{textoCantidad(entrada.cantidad)}
-                  {entrada.unidad ? ` ${entrada.unidad}` : ""}
-                </span>
-              </li>
-            ))}
+            {movimientos.map((movimiento) => {
+              const { texto, signo } = etiquetaMovimiento(movimiento.tipo);
+              return (
+                <li
+                  key={movimiento.id}
+                  className="flex items-baseline justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm"
+                >
+                  <span className="min-w-0">
+                    <span className="font-medium text-foreground">{texto}</span>
+                    <span className="text-muted"> · {movimiento.producto}</span>
+                    {movimiento.folioVenta ? (
+                      <span className="text-muted">
+                        {" "}
+                        · folio {movimiento.folioVenta}
+                      </span>
+                    ) : null}
+                    {movimiento.nota ? (
+                      <span className="text-muted"> · {movimiento.nota}</span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 font-medium tabular-nums">
+                    {signo}
+                    {textoCantidad(movimiento.cantidad)}
+                    {movimiento.unidad ? ` ${movimiento.unidad}` : ""}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}

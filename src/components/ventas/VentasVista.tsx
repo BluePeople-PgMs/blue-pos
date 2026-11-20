@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
   agregarLinea,
@@ -8,9 +9,11 @@ import {
   cobrarVenta,
   crearVentaAbierta,
   esMetodoPago,
+  existenciasDeLineas,
   leerCatalogoVentas,
   leerVenta,
   listarVentas,
+  resumenCambiosExistencia,
   type MetodoPago,
   type ProductoVenta,
   type VentaDetalle,
@@ -36,6 +39,25 @@ function etiquetaEstado(estado: VentaLista["estado"]) {
   return "Cancelada";
 }
 
+function etiquetaMetodo(metodo: string) {
+  if (metodo === "efectivo") return "Efectivo";
+  if (metodo === "tarjeta") return "Tarjeta";
+  if (metodo === "transferencia") return "Transferencia";
+  return metodo;
+}
+
+function textoResumenExistencia(
+  cambios: ReturnType<typeof resumenCambiosExistencia>,
+) {
+  if (cambios.length === 0) return "";
+  return cambios
+    .map(
+      (c) =>
+        `${c.nombre}: ${textoCantidad(c.anterior)} → ${textoCantidad(c.siguiente)}`,
+    )
+    .join(" · ");
+}
+
 export function VentasVista() {
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -51,6 +73,7 @@ export function VentasVista() {
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [enlaceInventario, setEnlaceInventario] = useState(false);
 
   const recargar = useCallback(async () => {
     const [catalogo, lista] = await Promise.all([
@@ -141,8 +164,10 @@ export function VentasVista() {
   }
 
   async function cobrar() {
-    if (!ventaId) return;
+    if (!ventaId || !venta) return;
     setMensaje(null);
+    setEnlaceInventario(false);
+    const antes = await existenciasDeLineas(venta.lineasDetalle);
     setEnviando(true);
     const { error } = await cobrarVenta({ ventaId, metodo });
     setEnviando(false);
@@ -150,9 +175,21 @@ export function VentasVista() {
       setMensaje(error);
       return;
     }
+    const despues = await existenciasDeLineas(venta.lineasDetalle);
+    const cambios = resumenCambiosExistencia(
+      venta.lineasDetalle,
+      antes.cantidades,
+      despues.cantidades,
+    );
+    const resumen = textoResumenExistencia(cambios);
     await recargar();
     await cargarVenta(ventaId);
-    setMensaje("Venta cobrada. El inventario ya restó las existencias.");
+    setEnlaceInventario(true);
+    setMensaje(
+      resumen
+        ? `Venta cobrada. Existencias: ${resumen}.`
+        : "Venta cobrada. El inventario ya restó las existencias.",
+    );
   }
 
   async function cancelarAbierta() {
@@ -171,8 +208,10 @@ export function VentasVista() {
   }
 
   async function cancelarCobrada() {
-    if (!ventaId) return;
+    if (!ventaId || !venta) return;
     setMensaje(null);
+    setEnlaceInventario(false);
+    const antes = await existenciasDeLineas(venta.lineasDetalle);
     setEnviando(true);
     const { error } = await cancelarVentaCobrada({
       ventaId,
@@ -183,10 +222,22 @@ export function VentasVista() {
       setMensaje(error);
       return;
     }
+    const despues = await existenciasDeLineas(venta.lineasDetalle);
+    const cambios = resumenCambiosExistencia(
+      venta.lineasDetalle,
+      antes.cantidades,
+      despues.cantidades,
+    );
+    const resumen = textoResumenExistencia(cambios);
     setMotivo("");
     await recargar();
     await cargarVenta(ventaId);
-    setMensaje("Venta cancelada. La existencia se devolvió.");
+    setEnlaceInventario(true);
+    setMensaje(
+      resumen
+        ? `Venta cancelada. Existencias: ${resumen}.`
+        : "Venta cancelada. La existencia se devolvió.",
+    );
   }
 
   if (cargando) {
@@ -270,6 +321,20 @@ export function VentasVista() {
             <p className="text-sm text-muted">
               {etiquetaEstado(venta.estado)} · Total {dinero(venta.total)}
             </p>
+            {venta.pago ? (
+              <p className="text-sm text-muted">
+                Pago: {etiquetaMetodo(venta.pago.metodo)} ·{" "}
+                {dinero(venta.pago.monto)}
+              </p>
+            ) : null}
+            {venta.cancelacion ? (
+              <p className="text-sm text-muted">
+                Cancelación
+                {venta.cancelacion.motivo
+                  ? `: ${venta.cancelacion.motivo}`
+                  : " registrada"}
+              </p>
+            ) : null}
           </header>
 
           {venta.lineasDetalle.length > 0 ? (
@@ -425,9 +490,20 @@ export function VentasVista() {
       )}
 
       {mensaje ? (
-        <p role="status" className="text-sm text-muted">
-          {mensaje}
-        </p>
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 text-sm text-muted"
+        >
+          <span>{mensaje}</span>
+          {enlaceInventario ? (
+            <Link
+              href="/inventario"
+              className="font-medium text-accent underline-offset-2 hover:underline"
+            >
+              Ver inventario
+            </Link>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -16,12 +16,16 @@ export type CajaInventario = {
   nombre: string;
 };
 
-export type EntradaReciente = {
+export type TipoMovimientoInventario = "entrada" | "salida_venta" | "cancelacion";
+
+export type MovimientoReciente = {
   id: string;
+  tipo: TipoMovimientoInventario;
   producto: string;
   cantidad: number;
   unidad: string;
   nota: string;
+  folioVenta: string | null;
   cuando: string;
 };
 
@@ -36,7 +40,7 @@ export async function leerInventario() {
       sesion: false,
       productos: [] as ProductoInventario[],
       cajas: [] as CajaInventario[],
-      entradas: [] as EntradaReciente[],
+      movimientos: [] as MovimientoReciente[],
     };
   }
 
@@ -61,7 +65,7 @@ export async function leerInventario() {
       sesion,
       productos: [] as ProductoInventario[],
       cajas: [] as CajaInventario[],
-      entradas: [] as EntradaReciente[],
+      movimientos: [] as MovimientoReciente[],
     };
   }
 
@@ -74,7 +78,7 @@ export async function leerInventario() {
 
   let existencias = new Map<string, number>();
   let aviso: string | null = null;
-  let entradas: EntradaReciente[] = [];
+  let movimientos: MovimientoReciente[] = [];
 
   if (!sesion) {
     aviso = SIN_SESION;
@@ -83,10 +87,10 @@ export async function leerInventario() {
       supabase.from("existencias").select("producto_id, cantidad"),
       supabase
         .from("movimientos_inventario")
-        .select("id, producto_id, cantidad, nota, created_at")
-        .eq("tipo", "entrada")
+        .select("id, producto_id, cantidad, nota, created_at, tipo, venta_id")
+        .in("tipo", ["entrada", "salida_venta", "cancelacion"])
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(12),
     ]);
 
     if (existenciasRes.error || movimientosRes.error) {
@@ -101,17 +105,38 @@ export async function leerInventario() {
       const nombres = new Map(
         (productosRes.data ?? []).map((producto) => [producto.id, producto]),
       );
-      entradas = (movimientosRes.data ?? []).map((movimiento) => {
+      const filas = movimientosRes.data ?? [];
+      const ventaIds = [
+        ...new Set(
+          filas.map((m) => m.venta_id).filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const folios = new Map<string, string | null>();
+      if (ventaIds.length > 0) {
+        const { data: ventas } = await supabase
+          .from("ventas")
+          .select("id, folio")
+          .in("id", ventaIds);
+        for (const venta of ventas ?? []) {
+          folios.set(venta.id, venta.folio);
+        }
+      }
+      movimientos = filas.map((movimiento) => {
         const producto = nombres.get(movimiento.producto_id);
         const unidad = producto?.unidad_id
           ? unidades.get(producto.unidad_id)
           : undefined;
+        const tipo = movimiento.tipo as TipoMovimientoInventario;
         return {
           id: movimiento.id,
+          tipo,
           producto: producto?.nombre ?? "Producto",
           cantidad: Number(movimiento.cantidad),
           unidad: unidad?.abreviatura ?? unidad?.nombre ?? "",
           nota: movimiento.nota ?? "",
+          folioVenta: movimiento.venta_id
+            ? (folios.get(movimiento.venta_id) ?? null)
+            : null,
           cuando: movimiento.created_at,
         };
       });
@@ -147,7 +172,7 @@ export async function leerInventario() {
     sesion: !aviso && sesion,
     productos,
     cajas: (cajasRes.data ?? []) as CajaInventario[],
-    entradas,
+    movimientos,
   };
 }
 

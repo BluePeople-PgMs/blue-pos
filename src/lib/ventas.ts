@@ -30,9 +30,29 @@ export type VentaLista = {
   lineas: number;
 };
 
+export type PagoVenta = {
+  metodo: string;
+  monto: number;
+  cuando: string;
+};
+
+export type CancelacionVenta = {
+  motivo: string | null;
+  cuando: string;
+};
+
 export type VentaDetalle = VentaLista & {
   cajaId: string | null;
   lineasDetalle: LineaVenta[];
+  pago: PagoVenta | null;
+  cancelacion: CancelacionVenta | null;
+};
+
+export type CambioExistencia = {
+  productoId: string;
+  nombre: string;
+  anterior: number;
+  siguiente: number;
 };
 
 const SIN_SESION =
@@ -215,19 +235,110 @@ export async function leerVenta(ventaId: string) {
     };
   });
 
+  let pago: PagoVenta | null = null;
+  let cancelacion: CancelacionVenta | null = null;
+  const estado = venta.estado as VentaDetalle["estado"];
+
+  if (estado === "cobrada" || estado === "cancelada") {
+    const { data: pagoRow } = await supabase
+      .from("pagos")
+      .select("metodo, monto, created_at")
+      .eq("venta_id", ventaId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (pagoRow) {
+      pago = {
+        metodo: pagoRow.metodo,
+        monto: Number(pagoRow.monto),
+        cuando: pagoRow.created_at,
+      };
+    }
+  }
+
+  if (estado === "cancelada") {
+    const { data: cancelRow } = await supabase
+      .from("cancelaciones")
+      .select("motivo, created_at")
+      .eq("venta_id", ventaId)
+      .maybeSingle();
+    if (cancelRow) {
+      cancelacion = {
+        motivo: cancelRow.motivo,
+        cuando: cancelRow.created_at,
+      };
+    }
+  }
+
   return {
     error: null,
     venta: {
       id: venta.id,
       folio: venta.folio,
-      estado: venta.estado as VentaDetalle["estado"],
+      estado,
       total: Number(venta.total),
       cuando: venta.created_at,
       lineas: lineasDetalle.length,
       cajaId: venta.caja_id,
       lineasDetalle,
+      pago,
+      cancelacion,
     },
   };
+}
+
+export async function existenciasDeLineas(lineas: LineaVenta[]) {
+  const { supabase, error: sesionError } = await exigirSesion();
+  if (!supabase || sesionError) {
+    return { error: sesionError ?? "Sin sesión.", cantidades: new Map<string, number>() };
+  }
+
+  const ids = [
+    ...new Set(
+      lineas
+        .map((l) => l.productoId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  if (ids.length === 0) {
+    return { error: null, cantidades: new Map<string, number>() };
+  }
+
+  const { data, error } = await supabase
+    .from("existencias")
+    .select("producto_id, cantidad")
+    .in("producto_id", ids);
+
+  if (error) {
+    return { error: mensajeLegible(error.message), cantidades: new Map<string, number>() };
+  }
+
+  const cantidades = new Map(
+    (data ?? []).map((fila) => [fila.producto_id, Number(fila.cantidad)]),
+  );
+  return { error: null, cantidades };
+}
+
+export function resumenCambiosExistencia(
+  lineas: LineaVenta[],
+  antes: Map<string, number>,
+  despues: Map<string, number>,
+): CambioExistencia[] {
+  const cambios: CambioExistencia[] = [];
+  for (const linea of lineas) {
+    if (!linea.productoId) continue;
+    const anterior = antes.get(linea.productoId) ?? 0;
+    const siguiente = despues.get(linea.productoId) ?? 0;
+    if (anterior !== siguiente) {
+      cambios.push({
+        productoId: linea.productoId,
+        nombre: linea.producto,
+        anterior,
+        siguiente,
+      });
+    }
+  }
+  return cambios;
 }
 
 export async function crearVentaAbierta(cajaId: string | null) {

@@ -2,7 +2,9 @@
 
 Cascarón de un punto de venta híbrido: se vende producto de mostrador y también comida con receta. Varias computadoras usan la misma base en Supabase.
 
-Este repo trae la pantalla de inicio y las tablas. El equipo de la capacitación construye las pantallas. La primera tarea es el login.
+Este repo trae la pantalla de inicio y las tablas. El equipo de la capacitación construye las pantallas.
+
+El equipo **Slytherin** documenta su flujo de trabajo, el guión de demo final y las reglas de la base compartida en [docs/slytherin.md](docs/slytherin.md).
 
 ## Login
 
