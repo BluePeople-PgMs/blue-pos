@@ -5,13 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 
 const slides = [
   {
-    src: "/combos/carrusel-resumen.svg",
-    titulo: "Guía de descuentos",
-    subtitulo: "Productos en el combo × porcentaje de ahorro",
-    alt: "",
-    contain: false,
-  },
-  {
     src: "/combos/selecciona-tu-combo.png",
     titulo: "Selecciona tu combo",
     subtitulo: "Elige un platillo y arma los componentes en el editor",
