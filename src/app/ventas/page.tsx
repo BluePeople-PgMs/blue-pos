@@ -9,24 +9,22 @@ export const metadata = {
 export default function VentasPage() {
   return (
     <RequiereSesion>
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
-        <header className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
-              Ventas
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-4 px-4 py-6 lg:px-6">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.14em] text-olive uppercase">
+              Captura de pedidos
             </p>
-            <Link href="/" className="text-sm font-medium text-muted">
-              Inicio
-            </Link>
+            <h1 className="font-display text-2xl font-semibold tracking-tight">
+              Menú y cobro
+            </h1>
           </div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Punto de cobro
-          </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted">
-            Arma el carrito, cobra con el método que prefieras y revisa el
-            impacto en inventario. Filtra la lista por abiertas, pagadas o
-            canceladas.
-          </p>
+          <Link
+            href="/"
+            className="text-sm font-medium text-muted hover:text-foreground"
+          >
+            Inicio
+          </Link>
         </header>
         <VentasVista />
       </main>

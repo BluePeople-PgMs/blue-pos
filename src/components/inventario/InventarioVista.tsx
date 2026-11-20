@@ -30,9 +30,13 @@ function etiquetaTipo(tipo: string) {
 }
 
 function etiquetaMovimiento(tipo: TipoMovimientoInventario) {
-  if (tipo === "entrada") return { texto: "Entrada", signo: "+" as const };
-  if (tipo === "salida_venta") return { texto: "Salida venta", signo: "−" as const };
-  return { texto: "Cancelación", signo: "+" as const };
+  if (tipo === "entrada") {
+    return { texto: "Entrada", signo: "+" as const, icono: "↑" as const };
+  }
+  if (tipo === "salida_venta") {
+    return { texto: "Salida venta", signo: "−" as const, icono: "↓" as const };
+  }
+  return { texto: "Cancelación", signo: "+" as const, icono: "↺" as const };
 }
 
 export function InventarioVista() {
@@ -256,13 +260,19 @@ export function InventarioVista() {
           </p>
           <ul className="flex flex-col gap-2">
             {movimientos.map((movimiento) => {
-              const { texto, signo } = etiquetaMovimiento(movimiento.tipo);
+              const { texto, signo, icono } = etiquetaMovimiento(movimiento.tipo);
               return (
                 <li
                   key={movimiento.id}
                   className="flex items-baseline justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm"
                 >
                   <span className="min-w-0">
+                    <span
+                      className="mr-1.5 inline-flex size-6 items-center justify-center rounded-full bg-background font-semibold text-accent ring-1 ring-line"
+                      aria-hidden
+                    >
+                      {icono}
+                    </span>
                     <span className="font-medium text-foreground">{texto}</span>
                     <span className="text-muted"> · {movimiento.producto}</span>
                     {movimiento.folioVenta ? (

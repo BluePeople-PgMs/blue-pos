@@ -5,6 +5,7 @@ export type ProductoVenta = {
   nombre: string;
   codigo: string;
   tipo: string;
+  categoria: string;
   precio: number;
   unidad: string;
   existencia: number;
@@ -89,24 +90,32 @@ export async function leerCatalogoVentas() {
     return { error: sesionError, productos: [] as ProductoVenta[] };
   }
 
-  const [productosRes, unidadesRes, existenciasRes] = await Promise.all([
-    supabase
-      .from("productos")
-      .select("id, nombre, codigo, tipo, precio, unidad_id")
-      .eq("activo", true)
-      .in("tipo", ["preparado", "directo"]),
-    supabase.from("unidades").select("id, abreviatura, nombre"),
-    supabase.from("existencias").select("producto_id, cantidad"),
-  ]);
+  const [productosRes, unidadesRes, existenciasRes, categoriasRes] =
+    await Promise.all([
+      supabase
+        .from("productos")
+        .select("id, nombre, codigo, tipo, precio, unidad_id, categoria_id")
+        .eq("activo", true)
+        .in("tipo", ["preparado", "directo"]),
+      supabase.from("unidades").select("id, abreviatura, nombre"),
+      supabase.from("existencias").select("producto_id, cantidad"),
+      supabase.from("categorias").select("id, nombre"),
+    ]);
 
   const error =
-    productosRes.error ?? unidadesRes.error ?? existenciasRes.error;
+    productosRes.error ??
+    unidadesRes.error ??
+    existenciasRes.error ??
+    categoriasRes.error;
   if (error) {
     return { error: mensajeLegible(error.message), productos: [] as ProductoVenta[] };
   }
 
   const unidades = new Map(
     (unidadesRes.data ?? []).map((u) => [u.id, u]),
+  );
+  const categorias = new Map(
+    (categoriasRes.data ?? []).map((c) => [c.id, c.nombre]),
   );
   const existencias = new Map(
     (existenciasRes.data ?? []).map((e) => [
@@ -117,11 +126,15 @@ export async function leerCatalogoVentas() {
 
   const productos = (productosRes.data ?? []).map((p) => {
     const unidad = p.unidad_id ? unidades.get(p.unidad_id) : undefined;
+    const categoriaNombre = p.categoria_id
+      ? (categorias.get(p.categoria_id) ?? "General")
+      : "General";
     return {
       id: p.id,
       nombre: p.nombre,
       codigo: p.codigo ?? "",
       tipo: p.tipo,
+      categoria: categoriaNombre,
       precio: Number(p.precio ?? 0),
       unidad: unidad?.abreviatura ?? unidad?.nombre ?? "",
       existencia: existencias.get(p.id) ?? 0,

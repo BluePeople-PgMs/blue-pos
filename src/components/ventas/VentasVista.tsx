@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { VentasPosLayout } from "@/components/ventas/ventas-pos-layout";
+import { useRol } from "@/components/contexto/RolContext";
 import {
   actualizarCantidadLinea,
   agregarLinea,
@@ -90,6 +92,7 @@ const METODOS: { id: MetodoPago; titulo: string; detalle: string }[] = [
 ];
 
 export function VentasVista() {
+  const { esAdministrador } = useRol();
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
   const [puedeOperar, setPuedeOperar] = useState(false);
@@ -98,7 +101,6 @@ export function VentasVista() {
   const [ventaId, setVentaId] = useState<string | null>(null);
   const [venta, setVenta] = useState<VentaDetalle | null>(null);
   const [productoId, setProductoId] = useState("");
-  const [cantidad, setCantidad] = useState("1");
   const [notasLinea, setNotasLinea] = useState("");
   const [metodo, setMetodo] = useState<MetodoPago>("efectivo");
   const [motivo, setMotivo] = useState("");
@@ -108,6 +110,10 @@ export function VentasVista() {
   const [enlaceInventario, setEnlaceInventario] = useState(false);
   const [filtroLista, setFiltroLista] = useState<FiltroLista>("todas");
   const [busquedaProducto, setBusquedaProducto] = useState("");
+  const [tipoCatalogo, setTipoCatalogo] = useState<
+    "todos" | "comidas" | "empacados"
+  >("todos");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("todas");
 
   const recargar = useCallback(async () => {
     const [catalogo, lista] = await Promise.all([
@@ -156,19 +162,37 @@ export function VentasVista() {
     return ventas.filter((v) => v.estado === filtroLista);
   }, [ventas, filtroLista]);
 
-  const productosSugeridos = useMemo(() => {
-    const consulta = normalizar(busquedaProducto.trim());
-    const base = consulta
-      ? productos.filter(
-          (p) =>
-            normalizar(p.nombre).includes(consulta) ||
-            normalizar(p.codigo).includes(consulta),
-        )
-      : productos.filter((p) => p.existencia > 0);
-    return base.slice(0, 12);
-  }, [productos, busquedaProducto]);
+  const categoriasMenu = useMemo(() => {
+    const nombres = new Set(
+      productos.map((p) => p.categoria || "General").filter(Boolean),
+    );
+    return [...nombres].sort((a, b) => a.localeCompare(b, "es"));
+  }, [productos]);
 
-  const productoSel = productos.find((p) => p.id === productoId);
+  const productosMenu = useMemo(() => {
+    const consulta = normalizar(busquedaProducto.trim());
+    let base = productos.filter((p) => {
+      if (tipoCatalogo === "comidas" && p.tipo !== "preparado") return false;
+      if (tipoCatalogo === "empacados" && p.tipo !== "directo") return false;
+      if (
+        categoriaFiltro !== "todas" &&
+        (p.categoria || "General") !== categoriaFiltro
+      ) {
+        return false;
+      }
+      return true;
+    });
+    if (consulta) {
+      base = base.filter(
+        (p) =>
+          normalizar(p.nombre).includes(consulta) ||
+          normalizar(p.codigo).includes(consulta),
+      );
+    } else {
+      base = base.filter((p) => p.existencia > 0);
+    }
+    return base;
+  }, [productos, busquedaProducto, tipoCatalogo, categoriaFiltro]);
 
   function publicarMensaje(texto: string, tono: TonoMensaje, inventario = false) {
     setMensaje(texto);
@@ -198,12 +222,6 @@ export function VentasVista() {
       "Venta nueva lista. Busca un producto y agrégalo al carrito.",
       "ok",
     );
-  }
-
-  function ajustarCantidad(delta: number) {
-    const actual = Number(cantidad);
-    const siguiente = (Number.isFinite(actual) ? actual : 0) + delta;
-    setCantidad(String(Math.max(1, siguiente)));
   }
 
   async function cambiarCantidadLinea(lineaId: string, cantidad: number) {
@@ -237,30 +255,38 @@ export function VentasVista() {
     publicarMensaje("Línea quitada del carrito.", "ok");
   }
 
-  async function agregar() {
-    if (!ventaId) return;
-    const numero = Number(cantidad);
-    if (!productoId || !(numero > 0)) {
-      publicarMensaje("Elige un producto y una cantidad mayor a cero.", "error");
+  async function agregarProductoRapido(producto: ProductoVenta) {
+    if (!ventaId) {
+      publicarMensaje("Abre o selecciona una venta abierta.", "error");
       return;
     }
+    if (venta?.estado !== "abierta") {
+      publicarMensaje("Solo puedes agregar líneas a ventas abiertas.", "error");
+      return;
+    }
+    if (producto.existencia <= 0 && !busquedaProducto.trim()) {
+      publicarMensaje(
+        `Sin existencia suficiente de ${producto.nombre}.`,
+        "error",
+      );
+      return;
+    }
+    setProductoId(producto.id);
     setEnviando(true);
     const { error } = await agregarLinea({
       ventaId,
-      productoId,
-      cantidad: numero,
-      notas: notasLinea,
+      productoId: producto.id,
+      cantidad: 1,
+      notas: notasLinea.trim() ? notasLinea : "",
     });
     setEnviando(false);
     if (error) {
       publicarMensaje(error, "error");
       return;
     }
-    setNotasLinea("");
-    setBusquedaProducto("");
     await recargar();
     await cargarVenta(ventaId);
-    publicarMensaje("Producto agregado a la venta.", "ok");
+    publicarMensaje(`${producto.nombre} agregado al pedido.`, "ok");
   }
 
   async function cobrar() {
@@ -348,7 +374,7 @@ export function VentasVista() {
         role="status"
         className="rounded-2xl border border-line bg-card px-6 py-10 text-center"
       >
-        <p className="text-sm text-muted">Preparando el punto de cobro…</p>
+        <p className="text-sm text-muted">Preparando captura de pedidos…</p>
       </div>
     );
   }
@@ -387,437 +413,46 @@ export function VentasVista() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
-        <aside className="flex flex-col gap-4 rounded-2xl border border-line bg-card p-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">Ventas recientes</h2>
-            <button
-              type="button"
-              disabled={!puedeOperar || enviando}
-              onClick={() => void nuevaVenta()}
-              className="rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-            >
-              + Nueva venta
-            </button>
-          </div>
-
-          <div
-            className="flex flex-wrap gap-1.5"
-            role="group"
-            aria-label="Filtrar ventas"
-          >
-            {(
-              [
-                ["todas", "Todos"],
-                ["abierta", "Abiertos"],
-                ["cobrada", "Pagadas"],
-                ["cancelada", "Cancelados"],
-              ] as const
-            ).map(([valor, etiqueta]) => (
-              <button
-                key={valor}
-                type="button"
-                aria-pressed={filtroLista === valor}
-                onClick={() => setFiltroLista(valor)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                  filtroLista === valor
-                    ? "bg-foreground text-background"
-                    : "bg-background text-muted ring-1 ring-line"
-                }`}
-              >
-                {etiqueta}
-              </button>
-            ))}
-          </div>
-
-          {ventasVisibles.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-line bg-background px-4 py-8 text-center text-sm text-muted">
-              <p>No hay ventas con este filtro.</p>
-              <button
-                type="button"
-                disabled={!puedeOperar || enviando}
-                onClick={() => void nuevaVenta()}
-                className="mt-3 text-sm font-semibold text-accent underline-offset-2 hover:underline disabled:opacity-50"
-              >
-                Crear el primero
-              </button>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {ventasVisibles.map((v) => {
-                const activa = v.id === ventaId;
-                return (
-                  <li key={v.id}>
-                    <button
-                      type="button"
-                      onClick={() => void seleccionarVenta(v.id)}
-                      className={`flex w-full flex-col gap-2 rounded-xl border px-3.5 py-3 text-left transition-colors ${
-                        activa
-                          ? "border-accent bg-accent-soft shadow-sm"
-                          : "border-line bg-background hover:border-accent/40"
-                      }`}
-                    >
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-sm font-semibold">
-                          {v.folio ?? v.id.slice(0, 8)}
-                        </span>
-                        <InsigniaEstado estado={v.estado} />
-                      </span>
-                      <span className="flex items-baseline justify-between gap-2 text-sm">
-                        <span className="text-muted">
-                          {v.lineas} artículo{v.lineas === 1 ? "" : "s"}
-                        </span>
-                        <span className="font-semibold tabular-nums">
-                          {dinero(v.total)}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </aside>
-
-        <div className="flex min-w-0 flex-col gap-4">
-          {!venta ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-line bg-card px-6 py-16 text-center">
-              <p className="max-w-sm text-base text-muted">
-                Elige una venta de la lista o abre una cuenta nueva para cobrar.
-              </p>
-              <button
-                type="button"
-                disabled={!puedeOperar || enviando}
-                onClick={() => void nuevaVenta()}
-                className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                Abrir nueva venta
-              </button>
-            </div>
-          ) : (
-            <section className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-card">
-              <header className="border-b border-line bg-background/80 px-5 py-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold tracking-[0.12em] text-muted uppercase">
-                      Venta seleccionada
-                    </p>
-                    <h2 className="mt-1 font-mono text-2xl font-semibold tracking-tight">
-                      Folio {venta.folio ?? "—"}
-                    </h2>
-                  </div>
-                  <InsigniaEstado estado={venta.estado} />
-                </div>
-                <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight text-accent">
-                  {dinero(venta.total)}
-                </p>
-                {venta.pago ? (
-                  <p className="mt-2 text-sm text-muted">
-                    Cobrado con {etiquetaMetodo(venta.pago.metodo)} ·{" "}
-                    {dinero(venta.pago.monto)}
-                  </p>
-                ) : null}
-                {venta.cancelacion ? (
-                  <p className="mt-1 text-sm text-muted">
-                    Motivo de cancelación:{" "}
-                    {venta.cancelacion.motivo?.trim() ||
-                      "Sin motivo capturado"}
-                  </p>
-                ) : null}
-              </header>
-
-              <div className="px-5">
-                <h3 className="text-sm font-semibold text-muted">Carrito</h3>
-                {venta.lineasDetalle.length > 0 ? (
-                  <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-background">
-                    {venta.lineasDetalle.map((linea) => {
-                      const editable = venta.estado === "abierta";
-                      return (
-                        <li
-                          key={linea.id}
-                          className="flex flex-col gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium leading-snug">
-                              {linea.producto}
-                            </p>
-                            <p className="mt-0.5 text-xs text-muted">
-                              {dinero(linea.precioUnitario)}
-                              {linea.codigo ? (
-                                <span className="font-mono">
-                                  {" "}
-                                  · {linea.codigo}
-                                </span>
-                              ) : null}
-                              {linea.notas ? (
-                                <span> · {linea.notas}</span>
-                              ) : null}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
-                            {editable ? (
-                              <div
-                                className="flex items-center gap-1"
-                                role="group"
-                                aria-label={`Cantidad de ${linea.producto}`}
-                              >
-                                <button
-                                  type="button"
-                                  disabled={enviando}
-                                  onClick={() =>
-                                    void cambiarCantidadLinea(
-                                      linea.id,
-                                      linea.cantidad - 1,
-                                    )
-                                  }
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-background text-base font-medium disabled:opacity-50"
-                                  aria-label="Menos uno"
-                                >
-                                  −
-                                </button>
-                                <span className="min-w-[2.5rem] text-center font-semibold tabular-nums">
-                                  {textoCantidad(linea.cantidad)}
-                                </span>
-                                <button
-                                  type="button"
-                                  disabled={enviando}
-                                  onClick={() =>
-                                    void cambiarCantidadLinea(
-                                      linea.id,
-                                      linea.cantidad + 1,
-                                    )
-                                  }
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-background text-base font-medium disabled:opacity-50"
-                                  aria-label="Más uno"
-                                >
-                                  +
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={enviando}
-                                  onClick={() => void quitarLinea(linea.id)}
-                                  className="ml-1 rounded-lg px-2 py-1 text-xs font-medium text-warn hover:bg-warn-soft"
-                                >
-                                  Quitar
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted">
-                                {textoCantidad(linea.cantidad)} ×
-                              </span>
-                            )}
-                            <span className="shrink-0 font-semibold tabular-nums">
-                              {dinero(linea.subtotal)}
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="mt-2 rounded-xl border border-dashed border-line bg-background px-4 py-6 text-center text-sm text-muted">
-                    El carrito está vacío. Agrega productos del catálogo.
-                  </p>
-                )}
-              </div>
-
-              {venta.estado === "abierta" ? (
-                <div className="flex flex-col gap-5 border-t border-line px-5 py-5">
-                  <div>
-                    <h3 className="text-base font-semibold">
-                      Agregar al carrito
-                    </h3>
-                    <p className="mt-1 text-sm text-muted">
-                      Busca por nombre o código. Solo aparecen productos con
-                      stock o los que coincidan con tu búsqueda.
-                    </p>
-                    <label className="mt-3 flex flex-col gap-1.5 text-sm font-medium">
-                      Buscar producto
-                      <input
-                        value={busquedaProducto}
-                        onChange={(e) => setBusquedaProducto(e.target.value)}
-                        placeholder="Ej. spaghetti, COM-031…"
-                        className="rounded-xl border border-line bg-background px-3 py-2.5 text-base font-normal outline-none focus:border-accent"
-                      />
-                    </label>
-                    <ul className="mt-3 grid max-h-52 gap-2 overflow-y-auto sm:grid-cols-2">
-                      {productosSugeridos.map((p) => {
-                        const activo = p.id === productoId;
-                        const sinStock = p.existencia <= 0;
-                        return (
-                          <li key={p.id}>
-                            <button
-                              type="button"
-                              onClick={() => setProductoId(p.id)}
-                              className={`flex w-full flex-col gap-1 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
-                                activo
-                                  ? "border-accent bg-accent-soft"
-                                  : "border-line bg-background hover:border-accent/50"
-                              } ${sinStock ? "opacity-70" : ""}`}
-                            >
-                              <span className="line-clamp-2 font-medium leading-snug">
-                                {p.nombre}
-                              </span>
-                              <span className="text-xs text-muted">
-                                {dinero(p.precio)} · stock{" "}
-                                {textoCantidad(p.existencia)}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    {productosSugeridos.length === 0 ? (
-                      <p className="mt-2 text-sm text-muted">
-                        Ningún producto coincide. Prueba otro término.
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-end">
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-medium">Cantidad</span>
-                      <div className="flex items-center gap-1 rounded-xl border border-line bg-background p-1">
-                        <button
-                          type="button"
-                          aria-label="Quitar uno"
-                          onClick={() => ajustarCantidad(-1)}
-                          className="flex size-9 items-center justify-center rounded-lg text-lg font-medium hover:bg-accent-soft"
-                        >
-                          −
-                        </button>
-                        <input
-                          value={cantidad}
-                          onChange={(e) => setCantidad(e.target.value)}
-                          inputMode="decimal"
-                          className="w-14 border-0 bg-transparent text-center text-base font-semibold tabular-nums outline-none"
-                        />
-                        <button
-                          type="button"
-                          aria-label="Agregar uno"
-                          onClick={() => ajustarCantidad(1)}
-                          className="flex size-9 items-center justify-center rounded-lg text-lg font-medium hover:bg-accent-soft"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    <label className="flex flex-col gap-1.5 text-sm font-medium">
-                      Nota para cocina (opcional)
-                      <input
-                        value={notasLinea}
-                        onChange={(e) => setNotasLinea(e.target.value)}
-                        placeholder="Sin cebolla, extra queso…"
-                        className="rounded-xl border border-line bg-background px-3 py-2.5 text-base font-normal"
-                      />
-                    </label>
-                  </div>
-
-                  {productoSel ? (
-                    <p className="rounded-xl bg-olive-soft/60 px-4 py-2.5 text-sm text-foreground">
-                      Vas a agregar{" "}
-                      <strong>{textoCantidad(Number(cantidad) || 0)}</strong>{" "}
-                      de <strong>{productoSel.nombre}</strong> (
-                      {dinero(productoSel.precio)} c/u).
-                    </p>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    disabled={!puedeOperar || enviando || !productoId}
-                    onClick={() => void agregar()}
-                    className="w-full rounded-xl bg-foreground py-3 text-sm font-semibold text-background disabled:opacity-50 sm:w-auto sm:px-6"
-                  >
-                    {enviando ? "Agregando…" : "Agregar al carrito"}
-                  </button>
-
-                  <div className="rounded-2xl border border-line bg-background/60 p-4">
-                    <h3 className="text-base font-semibold">Cobrar venta</h3>
-                    <p className="mt-1 text-sm text-muted">
-                      Al confirmar, se registra el pago y baja el inventario.
-                    </p>
-                    <div
-                      className="mt-4 grid gap-2 sm:grid-cols-3"
-                      role="group"
-                      aria-label="Método de pago"
-                    >
-                      {METODOS.map((opcion) => (
-                        <button
-                          key={opcion.id}
-                          type="button"
-                          aria-pressed={metodo === opcion.id}
-                          onClick={() => setMetodo(opcion.id)}
-                          className={`flex flex-col items-start rounded-xl border px-3 py-3 text-left text-sm transition-colors ${
-                            metodo === opcion.id
-                              ? "border-accent bg-accent-soft"
-                              : "border-line bg-card hover:border-accent/40"
-                          }`}
-                        >
-                          <span className="font-semibold">{opcion.titulo}</span>
-                          <span className="text-xs text-muted">
-                            {opcion.detalle}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                      <button
-                        type="button"
-                        disabled={
-                          !puedeOperar ||
-                          enviando ||
-                          venta.lineasDetalle.length === 0
-                        }
-                        onClick={() => void cobrar()}
-                        className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
-                      >
-                        {enviando
-                          ? "Procesando…"
-                          : `Cobrar ${dinero(venta.total)}`}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!puedeOperar || enviando}
-                        onClick={() => void cancelarAbierta()}
-                        className="rounded-xl border border-line px-5 py-3 text-sm font-medium text-muted hover:bg-card disabled:opacity-50"
-                      >
-                        Cancelar sin cobrar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {venta.estado === "cobrada" ? (
-                <div className="border-t border-line px-5 py-5">
-                  <h3 className="text-base font-semibold">Devolver venta</h3>
-                  <p className="mt-1 text-sm text-muted">
-                    Solo ventas cobradas. Se registra la cancelación y el stock
-                    vuelve al inventario.
-                  </p>
-                  <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium">
-                    ¿Por qué se cancela?
-                    <input
-                      value={motivo}
-                      onChange={(e) => setMotivo(e.target.value)}
-                      placeholder="Cliente equivocado, error en cocina…"
-                      className="rounded-xl border border-line bg-background px-3 py-2.5 text-base font-normal"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    disabled={!puedeOperar || enviando}
-                    onClick={() => void cancelarCobrada()}
-                    className="mt-4 rounded-xl border border-danger/40 bg-danger-soft px-5 py-2.5 text-sm font-semibold text-danger disabled:opacity-50"
-                  >
-                    Cancelar y devolver existencia
-                  </button>
-                </div>
-              ) : null}
-            </section>
-          )}
-        </div>
-      </div>
+      <VentasPosLayout
+        ventasVisibles={ventasVisibles}
+        ventaId={ventaId}
+        venta={venta}
+        filtroLista={filtroLista}
+        setFiltroLista={setFiltroLista}
+        puedeOperar={puedeOperar}
+        enviando={enviando}
+        onNuevaVenta={() => void nuevaVenta()}
+        onSeleccionarVenta={(id) => void seleccionarVenta(id)}
+        busquedaProducto={busquedaProducto}
+        setBusquedaProducto={setBusquedaProducto}
+        tipoCatalogo={tipoCatalogo}
+        setTipoCatalogo={setTipoCatalogo}
+        categoriaFiltro={categoriaFiltro}
+        setCategoriaFiltro={setCategoriaFiltro}
+        categoriasMenu={categoriasMenu}
+        productosMenu={productosMenu}
+        productoId={productoId}
+        notasLinea={notasLinea}
+        setNotasLinea={setNotasLinea}
+        metodo={metodo}
+        setMetodo={setMetodo}
+        motivo={motivo}
+        setMotivo={setMotivo}
+        esAdministrador={esAdministrador}
+        onAgregarRapido={(p) => void agregarProductoRapido(p)}
+        onCambiarCantidad={(lineaId, cantidad) =>
+          void cambiarCantidadLinea(lineaId, cantidad)
+        }
+        onQuitarLinea={(lineaId) => void quitarLinea(lineaId)}
+        onCobrar={() => void cobrar()}
+        onCancelarAbierta={() => void cancelarAbierta()}
+        onCancelarCobrada={() => void cancelarCobrada()}
+        dinero={dinero}
+        textoCantidad={textoCantidad}
+        etiquetaMetodo={etiquetaMetodo}
+        InsigniaEstado={InsigniaEstado}
+        METODOS={METODOS}
+      />
     </div>
   );
 }

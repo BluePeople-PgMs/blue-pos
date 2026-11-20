@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { EstadoConexion } from "@/components/EstadoConexion";
 import { LogoPizza } from "@/components/LogoPizza";
 import { PuertaInicio } from "@/components/PuertaInicio";
-import { modulos } from "@/lib/modulos";
+import { InicioAcciones } from "@/components/inicio/InicioAcciones";
+import { InicioModulosTecnicos } from "@/components/inicio/InicioModulosTecnicos";
 
 export default function Home() {
   return (
@@ -18,8 +18,8 @@ export default function Home() {
           Trattoria Blue
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-muted">
-          Punto de venta de la trattoria. El acceso empieza en el login.
-          Después aparece el menú de módulos.
+          Elige una acción abajo para vender, entrar mercancía o revisar
+          cobros. Los módulos técnicos siguen disponibles para el equipo.
         </p>
       </header>
 
@@ -36,52 +36,9 @@ export default function Home() {
         <EstadoConexion />
       </Suspense>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Módulos</h2>
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {modulos.map((modulo) => (
-            <li
-              key={modulo.nombre}
-              className="rounded-2xl border border-line bg-card px-5 py-5"
-            >
-              <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-lg font-semibold">{modulo.nombre}</h3>
-                <span
-                  className={`shrink-0 text-xs font-medium tracking-wide uppercase ${
-                    modulo.estado === "listo" ? "text-accent" : "text-muted"
-                  }`}
-                >
-                  {modulo.estado === "listo" ? "Listo" : "Por construir"}
-                </span>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted">{modulo.resumen}</p>
-              {modulo.enlaces ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {modulo.enlaces.map((enlace) => (
-                    <Link
-                      key={enlace.href}
-                      href={enlace.href}
-                      className="rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-white"
-                    >
-                      {enlace.etiqueta}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {modulo.tablas.map((tabla) => (
-                  <li
-                    key={tabla}
-                    className="rounded-md bg-background px-2 py-1 font-mono text-xs text-foreground"
-                  >
-                    {tabla}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <InicioAcciones />
+
+      <InicioModulosTecnicos />
     </main>
     </PuertaInicio>
   );

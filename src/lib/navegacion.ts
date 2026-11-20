@@ -1,3 +1,5 @@
+import type { RolSistema } from "@/lib/roles";
+
 export type ItemMenu = {
   nombre: string;
   href: string;
@@ -5,6 +7,8 @@ export type ItemMenu = {
   tablas: string[];
   /** Inventario, ventas, pagos y cancelaciones exigen sesión. */
   requiereSesion: boolean;
+  /** Sin lista = visible para todos los roles con sesión. */
+  roles?: RolSistema[];
 };
 
 export const menuModulos: ItemMenu[] = [
@@ -15,6 +19,7 @@ export const menuModulos: ItemMenu[] = [
       "Comidas preparadas y productos empacados de la trattoria.",
     tablas: ["categorias", "unidades", "productos", "cajas"],
     requiereSesion: true,
+    roles: ["cajero", "administrador"],
   },
   {
     nombre: "Combos",
@@ -23,6 +28,7 @@ export const menuModulos: ItemMenu[] = [
       "Combos con entrada, bebida y plato fuerte desde los catálogos.",
     tablas: ["productos", "combo_componentes"],
     requiereSesion: false,
+    roles: ["administrador"],
   },
   {
     nombre: "Recetas",
@@ -30,6 +36,7 @@ export const menuModulos: ItemMenu[] = [
     resumen: "Qué insumos lleva un producto preparado.",
     tablas: ["recetas", "receta_insumos"],
     requiereSesion: true,
+    roles: ["administrador"],
   },
   {
     nombre: "Inventario",
@@ -37,6 +44,7 @@ export const menuModulos: ItemMenu[] = [
     resumen: "Captura de entradas. Las salidas llegan desde las ventas.",
     tablas: ["existencias", "movimientos_inventario"],
     requiereSesion: true,
+    roles: ["administrador"],
   },
   {
     nombre: "Ventas",
@@ -44,6 +52,7 @@ export const menuModulos: ItemMenu[] = [
     resumen: "Abrir ventas, agregar productos y cobrar.",
     tablas: ["ventas", "venta_lineas"],
     requiereSesion: true,
+    roles: ["cajero", "administrador"],
   },
   {
     nombre: "Pagos",
@@ -51,6 +60,7 @@ export const menuModulos: ItemMenu[] = [
     resumen: "Cobra ventas abiertas y consulta historial de pagos.",
     tablas: ["pagos"],
     requiereSesion: true,
+    roles: ["administrador"],
   },
   {
     nombre: "Cancelaciones",
@@ -58,6 +68,7 @@ export const menuModulos: ItemMenu[] = [
     resumen: "Cancelar ventas y devolver existencia.",
     tablas: ["cancelaciones"],
     requiereSesion: true,
+    roles: ["administrador"],
   },
   {
     nombre: "Reportes",

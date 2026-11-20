@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { LogoPizza } from "@/components/LogoPizza";
+import { useRol } from "@/components/contexto/RolContext";
 import { MenuModulos } from "@/components/MenuModulos";
 import {
   borrarSesionLocal,
@@ -17,6 +18,7 @@ import { useMontado } from "@/lib/useMontado";
 export function BarraSesion() {
   const router = useRouter();
   const montado = useMontado();
+  const { estado: estadoRol, etiqueta: etiquetaRol } = useRol();
   const [usuario, setUsuario] = useState<User | null>(null);
   const [sesionLocal, setSesionLocal] = useState<string | null>(null);
 
@@ -86,10 +88,14 @@ export function BarraSesion() {
           {sesionActiva ? (
             <>
               <span className="text-muted">
-                Sesión:{" "}
                 <span className="font-medium text-foreground">
                   {etiquetaSesion}
                 </span>
+                {estadoRol === "listo" ? (
+                  <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
+                    {etiquetaRol}
+                  </span>
+                ) : null}
               </span>
               <button
                 type="button"

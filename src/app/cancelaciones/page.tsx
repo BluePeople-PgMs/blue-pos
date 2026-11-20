@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CancelacionesVista } from "@/components/cancelaciones/CancelacionesVista";
+import { RequiereAdministrador } from "@/components/RequiereAdministrador";
 import { RequiereSesion } from "@/components/RequiereSesion";
 
 export const metadata = {
@@ -9,6 +10,7 @@ export const metadata = {
 export default function CancelacionesPage() {
   return (
     <RequiereSesion>
+      <RequiereAdministrador>
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
         <header className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
@@ -29,6 +31,7 @@ export default function CancelacionesPage() {
         </header>
         <CancelacionesVista />
       </main>
+      </RequiereAdministrador>
     </RequiereSesion>
   );
 }

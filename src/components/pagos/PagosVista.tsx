@@ -60,8 +60,24 @@ export function PagosVista() {
   }, []);
 
   useEffect(() => {
-    void recargar();
-  }, [recargar]);
+    let activo = true;
+    void (async () => {
+      const [historial, pendientes] = await Promise.all([
+        listarPagos(),
+        listarVentasPendientesDePago(),
+      ]);
+      if (!activo) return;
+      const error = historial.error ?? pendientes.error;
+      setAviso(error);
+      setPuedeOperar(!error);
+      setPagos(historial.pagos);
+      setVentas(pendientes.ventas);
+      setCargando(false);
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   async function onSeleccionarVenta(id: string) {
     setVentaId(id);

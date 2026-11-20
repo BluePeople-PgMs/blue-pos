@@ -13,6 +13,17 @@
 - Catálogo oficial para capacitación: `npm run sembrar:catalogo` (una vez por base vacía).
 - No ejecutes `supabase/migrations/20261118190000_datos_prueba_ristorante.sql` si el catálogo Trattoria ya está cargado: duplicaría filas.
 
+## Roles (cajero y administrador)
+
+- Columna `perfiles.rol`: `cajero` (por defecto) o `administrador` (migración `20261120140000_perfiles_rol.sql`).
+- **Cajero:** menú reducido (Ventas, Catálogos), inicio «Tu turno de caja», puede cobrar y cancelar ventas abiertas; no cancela ventas pagadas ni entra a inventario/pagos/cancelaciones.
+- **Administrador:** menú completo, módulos técnicos en inicio, inventario y reportes.
+- Promover en SQL (reemplaza el uuid del usuario):
+
+```sql
+update public.perfiles set rol = 'administrador' where id = '…';
+```
+
 ## Login
 
 - Inventario, ventas, pagos y cancelaciones requieren sesión Supabase (JWT), no solo el correo en el navegador.

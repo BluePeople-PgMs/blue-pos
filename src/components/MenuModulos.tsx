@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRol } from "@/components/contexto/RolContext";
 import { menuModulos } from "@/lib/navegacion";
+import { menuVisibleParaRol } from "@/lib/roles";
 import { useMontado } from "@/lib/useMontado";
 
 export function MenuModulos() {
   const pathname = usePathname();
   const montado = useMontado();
+  const { rol, estado } = useRol();
+
+  const items =
+    estado === "listo"
+      ? menuModulos.filter((item) => menuVisibleParaRol(rol, item.roles))
+      : menuModulos;
 
   return (
     <nav
@@ -15,7 +23,7 @@ export function MenuModulos() {
       aria-label="Módulos del sistema"
     >
       <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 py-2">
-        {menuModulos.map((item) => {
+        {items.map((item) => {
           const activo =
             montado &&
             (pathname === item.href || pathname.startsWith(`${item.href}/`));

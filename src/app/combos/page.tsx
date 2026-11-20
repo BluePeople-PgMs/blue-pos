@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CombosVista } from "@/components/combos/CombosVista";
+import { RequiereAdministrador } from "@/components/RequiereAdministrador";
 
 export const metadata = {
   title: "Combos · Blue POS 2.0",
@@ -7,6 +8,7 @@ export const metadata = {
 
 export default function CombosPage() {
   return (
+    <RequiereAdministrador>
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
@@ -40,5 +42,6 @@ export default function CombosPage() {
       </header>
       <CombosVista />
     </main>
+    </RequiereAdministrador>
   );
 }
