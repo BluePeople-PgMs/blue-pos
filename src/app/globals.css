@@ -94,6 +94,17 @@ body {
   z-index: 1;
 }
 
+.login-photo {
+  background:
+    linear-gradient(rgb(243 239 230 / 0.35), rgb(243 239 230 / 0.35)),
+    url("/login-fondo.jpg") center / cover no-repeat;
+}
+
+.login-photo::before,
+.login-photo::after {
+  display: none;
+}
+
 .brand-login-shell {
   clip-path: polygon(0 0, 100% 0, 100% 72%, 0 100%);
   background: linear-gradient(135deg, var(--brand-navy-deep), var(--brand-navy));
