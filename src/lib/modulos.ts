@@ -29,11 +29,15 @@ export const modulos: Modulo[] = [
     nombre: "Ventas",
     resumen: "Al cobrar, la venta es la salida de inventario. También se puede cancelar.",
     tablas: ["ventas", "venta_lineas", "pagos", "cancelaciones"],
+    estado: "listo",
+    enlaces: [{ href: "/ventas", etiqueta: "Cobro de ticket" }],
   },
   {
     nombre: "Inventario",
     resumen: "Captura de entradas. Las salidas llegan desde las ventas.",
     tablas: ["existencias", "movimientos_inventario"],
+    estado: "listo",
+    enlaces: [{ href: "/inventario", etiqueta: "Entradas" }],
   },
   {
     nombre: "Combos",

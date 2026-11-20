@@ -35,27 +35,32 @@ export function FormularioLogin() {
 
     if (modo === "entrar") {
       const correo = email.trim();
-      if (!correo) {
+      if (!correo || !password) {
         setCargando(false);
-        setMensaje("Escribe un correo para identificar la sesión.");
+        setMensaje("Escribe correo y contraseña.");
         return;
       }
 
       const supabase = getSupabaseBrowser();
-      if (supabase && password) {
-        void supabase.auth
-          .signInWithPassword({ email: correo, password })
-          .then(({ error }) => {
-            if (error) {
-              return supabase.auth.signUp({ email: correo, password });
-            }
-            return null;
-          })
-          .catch(() => null);
+      if (!supabase) {
+        setCargando(false);
+        setMensaje(
+          "No hay cliente de Supabase. Revisa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY en .env.local.",
+        );
+        return;
       }
 
-      guardarSesionLocal(correo);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: correo,
+        password,
+      });
       setCargando(false);
+      if (error || !data.session) {
+        setMensaje(error?.message ?? "Supabase no abrió la sesión.");
+        return;
+      }
+
+      guardarSesionLocal(data.session.user.email ?? correo);
       router.push(destinoTrasLogin(siguiente));
       router.refresh();
       return;
@@ -81,6 +86,7 @@ export function FormularioLogin() {
     }
 
     if (data.session) {
+      guardarSesionLocal(data.session.user.email ?? email.trim());
       setMensajeOk(true);
       setMensaje(
         "Cuenta creada. Ya tienes sesión; perfiles se actualiza solo con el trigger.",

@@ -16,12 +16,10 @@ import { getSupabaseBrowser } from "@/lib/supabase";
 export function BarraSesion() {
   const router = useRouter();
   const [usuario, setUsuario] = useState<User | null>(null);
-  const [sesionLocal, setSesionLocal] = useState<string | null>(null);
-  const [listo, setListo] = useState(false);
-
+  const [sesionLocal, setSesionLocal] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : (leerSesionLocal()?.email ?? null),
+  );
   useEffect(() => {
-    setSesionLocal(leerSesionLocal()?.email ?? null);
-
     const actualizarLocal = () => {
       setSesionLocal(leerSesionLocal()?.email ?? null);
     };
@@ -29,13 +27,11 @@ export function BarraSesion() {
 
     const supabase = getSupabaseBrowser();
     if (!supabase) {
-      setListo(true);
       return () => window.removeEventListener(EVENTO_SESION, actualizarLocal);
     }
 
     void supabase.auth.getUser().then(({ data }) => {
       setUsuario(data.user);
-      setListo(true);
     });
 
     const {
@@ -63,10 +59,6 @@ export function BarraSesion() {
     setSesionLocal(null);
     router.push("/login");
     router.refresh();
-  }
-
-  if (!listo) {
-    return null;
   }
 
   return (

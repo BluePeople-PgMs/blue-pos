@@ -25,30 +25,36 @@ export function RequiereSesion({ children }: { children: ReactNode }) {
       router.replace(`/login?siguiente=${destino}`);
     }
 
-    function comprobar() {
-      if (leerSesionLocal()) {
-        if (activo) setEstado("ok");
-        return;
-      }
-
+    async function comprobar() {
       const supabase = getSupabaseBrowser();
       if (!supabase) {
         sinSesion();
         return;
       }
 
-      void supabase.auth.getUser().then(({ data }) => {
+      const { data: sesionData } = await supabase.auth.getSession();
+      if (!activo) return;
+      if (sesionData.session) {
+        setEstado("ok");
+        return;
+      }
+
+      if (leerSesionLocal()) {
+        const { data } = await supabase.auth.getUser();
         if (!activo) return;
         if (data.user) {
           setEstado("ok");
           return;
         }
-        sinSesion();
-      });
+      }
+
+      sinSesion();
     }
 
-    comprobar();
-    window.addEventListener(EVENTO_SESION, comprobar);
+    void comprobar();
+    window.addEventListener(EVENTO_SESION, () => {
+      void comprobar();
+    });
     return () => {
       activo = false;
       window.removeEventListener(EVENTO_SESION, comprobar);
