@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "sembrar:catalogo": "node --experimental-strip-types scripts/sembrar-catalogo.ts",
+    "sembrar:recetas": "node --experimental-strip-types scripts/sembrar-recetas.ts",
     "auth:sin-confirmacion": "node scripts/desactivar-confirmacion-email.mjs"
   },
   "dependencies": {

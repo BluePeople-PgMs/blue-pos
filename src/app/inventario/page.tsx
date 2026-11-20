@@ -21,9 +21,9 @@ export default function InventarioPage() {
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">Entradas</h1>
           <p className="max-w-2xl text-base leading-7 text-muted">
-            Los productos salen del catálogo de la trattoria: comidas
-            preparadas y productos empacados. Una entrada suma existencia. Las
-            salidas llegan cuando se cobra una venta.
+            Aquí controlas insumos de cocina (desde las recetas) y productos
+            empacados de mostrador. Una entrada suma existencia; al cobrar una
+            venta de terminados se descuenta el empacado vendido.
           </p>
         </header>
         <InventarioVista />

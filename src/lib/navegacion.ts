@@ -29,7 +29,7 @@ export const menuModulos: ItemMenu[] = [
     href: "/recetas",
     resumen: "Qué insumos lleva un producto preparado.",
     tablas: ["recetas", "receta_insumos"],
-    requiereSesion: false,
+    requiereSesion: true,
   },
   {
     nombre: "Inventario",

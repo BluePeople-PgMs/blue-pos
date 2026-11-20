@@ -1,3 +1,4 @@
+import { existenciasIniciales } from "@/data/recetas-italiano";
 import { getSupabaseBrowser } from "@/lib/supabase";
 
 export type ProductoInventario = {
@@ -51,7 +52,8 @@ export async function leerInventario() {
     supabase
       .from("productos")
       .select("id, nombre, codigo, tipo, categoria_id, unidad_id")
-      .eq("activo", true),
+      .eq("activo", true)
+      .in("tipo", ["insumo", "directo"]),
     supabase.from("categorias").select("id, nombre, orden"),
     supabase.from("unidades").select("id, nombre, abreviatura"),
     supabase.from("cajas").select("id, nombre").eq("activa", true),
@@ -250,6 +252,63 @@ export async function registrarEntrada(datos: {
   }
 
   return { error: null };
+}
+
+/** Fija cantidades de demostración (insumos + terminados). Requiere sesión. */
+export async function fijarStockDemostracion() {
+  const supabase = getSupabaseBrowser();
+  if (!supabase) {
+    return { error: "Faltan las variables de Supabase." };
+  }
+
+  const { data: sesionData } = await supabase.auth.getSession();
+  if (!sesionData.session) {
+    return { error: SIN_SESION };
+  }
+
+  const codigos = existenciasIniciales.map((fila) => fila.codigo);
+  const { data: productos, error: productosError } = await supabase
+    .from("productos")
+    .select("id, codigo")
+    .in("codigo", codigos);
+  if (productosError) {
+    return { error: mensajeLegible(productosError.message) };
+  }
+
+  const idPorCodigo = new Map(
+    (productos ?? [])
+      .filter((fila) => fila.codigo)
+      .map((fila) => [fila.codigo as string, fila.id]),
+  );
+
+  const filas = existenciasIniciales
+    .map((semilla) => {
+      const productoId = idPorCodigo.get(semilla.codigo);
+      if (!productoId) return null;
+      return {
+        producto_id: productoId,
+        cantidad: semilla.cantidad,
+      };
+    })
+    .filter((fila): fila is { producto_id: string; cantidad: number } =>
+      Boolean(fila),
+    );
+
+  if (filas.length !== existenciasIniciales.length) {
+    return {
+      error:
+        "Falta catálogo en la base. Corre npm run sembrar:catalogo y vuelve a intentar.",
+    };
+  }
+
+  const { error } = await supabase.from("existencias").upsert(filas, {
+    onConflict: "producto_id",
+  });
+  if (error) {
+    return { error: mensajeLegible(error.message) };
+  }
+
+  return { error: null, filas: filas.length };
 }
 
 function mensajeLegible(mensaje: string) {

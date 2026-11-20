@@ -1,4 +1,4 @@
-export type TipoCatalogo = "preparado" | "directo";
+export type TipoCatalogo = "preparado" | "directo" | "insumo";
 
 export type UnidadSemilla = {
   clave: string;
@@ -25,9 +25,14 @@ export const unidades: UnidadSemilla[] = [
   { clave: "pieza", nombre: "Pieza", abreviatura: "pza" },
   { clave: "botella", nombre: "Botella", abreviatura: "bot" },
   { clave: "lata", nombre: "Lata", abreviatura: "lata" },
+  { clave: "gramo", nombre: "Gramo", abreviatura: "g" },
+  { clave: "kilogramo", nombre: "Kilogramo", abreviatura: "kg" },
+  { clave: "mililitro", nombre: "Mililitro", abreviatura: "ml" },
+  { clave: "litro", nombre: "Litro", abreviatura: "L" },
 ];
 
 export const categorias: CategoriaSemilla[] = [
+  { nombre: "Ingredientes", orden: 5 },
   { nombre: "Entradas", orden: 10 },
   { nombre: "Sopas", orden: 20 },
   { nombre: "Ensaladas", orden: 30 },

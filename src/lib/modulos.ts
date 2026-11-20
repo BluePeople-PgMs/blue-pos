@@ -34,10 +34,11 @@ export const modulos: Modulo[] = [
   },
   {
     nombre: "Inventario",
-    resumen: "Captura de entradas. Las salidas llegan desde las ventas.",
+    resumen:
+      "Existencias de insumos de cocina y productos empacados. Las salidas de venta aplican a los terminados.",
     tablas: ["existencias", "movimientos_inventario"],
     estado: "listo",
-    enlaces: [{ href: "/inventario", etiqueta: "Entradas" }],
+    enlaces: [{ href: "/inventario", etiqueta: "Existencias" }],
   },
   {
     nombre: "Combos",
@@ -49,8 +50,10 @@ export const modulos: Modulo[] = [
   },
   {
     nombre: "Recetas",
-    resumen: "Qué insumos lleva un producto preparado.",
+    resumen: "Insumos por porción de cada comida preparada del menú.",
     tablas: ["recetas", "receta_insumos"],
+    estado: "listo",
+    enlaces: [{ href: "/recetas", etiqueta: "Ver recetas" }],
   },
   {
     nombre: "Pagos",

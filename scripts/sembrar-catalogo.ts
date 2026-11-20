@@ -5,6 +5,7 @@ import {
   productos,
   unidades,
 } from "../src/data/catalogo-italiano.ts";
+import { insumos } from "../src/data/recetas-italiano.ts";
 
 function leerEnvLocal() {
   const texto = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
@@ -44,7 +45,8 @@ async function main() {
   const codigos = new Set<string>();
   const nombresCategoria = new Set(categorias.map((categoria) => categoria.nombre));
   const clavesUnidad = new Set(unidades.map((unidad) => unidad.clave));
-  for (const producto of productos) {
+  const catalogo = [...productos, ...insumos];
+  for (const producto of catalogo) {
     if (codigos.has(producto.codigo)) {
       throw new Error(`Código repetido: ${producto.codigo}`);
     }
@@ -117,7 +119,7 @@ async function main() {
   const unidadPorClave = new Map(
     unidades.map((unidad) => [unidad.clave, unidad.nombre]),
   );
-  const productosNuevos = productos
+  const productosNuevos = catalogo
     .filter((producto) => !codigosExistentes.has(producto.codigo))
     .map((producto) => {
       const categoriaId = categoriaPorNombre.get(producto.categoria);
@@ -141,7 +143,7 @@ async function main() {
 
   await insertarEnLotes(supabase, "productos", productosNuevos);
 
-  const codigosVigentes = new Set(productos.map((producto) => producto.codigo));
+  const codigosVigentes = new Set(catalogo.map((producto) => producto.codigo));
   const sobrantes = (productosActuales.data ?? [])
     .map((fila) => fila.codigo)
     .filter(
@@ -155,13 +157,14 @@ async function main() {
     if (error) throw new Error(`productos: ${error.message}`);
   }
 
-  const comidas = productos.filter((producto) => producto.tipo === "preparado");
-  const terminados = productos.filter((producto) => producto.tipo === "directo");
+  const comidas = catalogo.filter((producto) => producto.tipo === "preparado");
+  const terminados = catalogo.filter((producto) => producto.tipo === "directo");
+  const ingredientes = catalogo.filter((producto) => producto.tipo === "insumo");
   console.log(
     `Listo. ${categoriasNuevas.length} categorías nuevas, ${unidadesNuevas.length} unidades nuevas, ${productosNuevos.length} productos nuevos.`,
   );
   console.log(
-    `Catálogo: ${comidas.length} comidas preparadas y ${terminados.length} productos terminados. Se quitaron ${sobrantes.length}.`,
+    `Catálogo: ${comidas.length} comidas, ${terminados.length} terminados, ${ingredientes.length} insumos. Se quitaron ${sobrantes.length}.`,
   );
 }
 

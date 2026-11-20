@@ -441,18 +441,127 @@ export async function cobrarVenta(datos: {
     return { error: "Agrega al menos una línea antes de cobrar." };
   }
 
+  const productoIds = detalle.venta.lineasDetalle
+    .map((linea) => linea.productoId)
+    .filter((id): id is string => Boolean(id));
+
+  const { data: productosVenta, error: productosError } = await supabase
+    .from("productos")
+    .select("id, nombre, tipo")
+    .in("id", productoIds);
+  if (productosError) {
+    return { error: mensajeLegible(productosError.message) };
+  }
+
+  const tipoPorId = new Map(
+    (productosVenta ?? []).map((producto) => [producto.id, producto.tipo]),
+  );
+  const nombrePorId = new Map(
+    (productosVenta ?? []).map((producto) => [producto.id, producto.nombre]),
+  );
+
+  const preparadoIds = productoIds.filter(
+    (id) => tipoPorId.get(id) === "preparado",
+  );
+
+  const recetaPorPlato = new Map<
+    string,
+    { rendimiento: number; lineas: { insumoId: string; cantidad: number }[] }
+  >();
+
+  if (preparadoIds.length > 0) {
+    const { data: recetas, error: recetasError } = await supabase
+      .from("recetas")
+      .select("id, producto_id, rendimiento")
+      .in("producto_id", preparadoIds);
+    if (recetasError) {
+      return { error: mensajeLegible(recetasError.message) };
+    }
+
+    const recetaIds = (recetas ?? []).map((receta) => receta.id);
+    const { data: insumosReceta, error: insumosError } = await supabase
+      .from("receta_insumos")
+      .select("receta_id, insumo_id, cantidad")
+      .in("receta_id", recetaIds);
+    if (insumosError) {
+      return { error: mensajeLegible(insumosError.message) };
+    }
+
+    const lineasPorReceta = new Map<string, { insumoId: string; cantidad: number }[]>();
+    for (const fila of insumosReceta ?? []) {
+      const lista = lineasPorReceta.get(fila.receta_id) ?? [];
+      lista.push({
+        insumoId: fila.insumo_id,
+        cantidad: Number(fila.cantidad),
+      });
+      lineasPorReceta.set(fila.receta_id, lista);
+    }
+
+    for (const receta of recetas ?? []) {
+      recetaPorPlato.set(receta.producto_id, {
+        rendimiento: Number(receta.rendimiento || 1),
+        lineas: lineasPorReceta.get(receta.id) ?? [],
+      });
+    }
+  }
+
+  const salidas = new Map<string, number>();
+
   for (const linea of detalle.venta.lineasDetalle) {
     if (!linea.productoId) continue;
+    const tipo = tipoPorId.get(linea.productoId);
+
+    if (tipo === "directo") {
+      salidas.set(
+        linea.productoId,
+        (salidas.get(linea.productoId) ?? 0) + linea.cantidad,
+      );
+      continue;
+    }
+
+    if (tipo === "preparado") {
+      const receta = recetaPorPlato.get(linea.productoId);
+      if (!receta || receta.lineas.length === 0) {
+        return {
+          error: `No hay receta cargada para ${linea.producto}. Corre npm run sembrar:recetas.`,
+        };
+      }
+      const factor = linea.cantidad / receta.rendimiento;
+      for (const insumo of receta.lineas) {
+        const total = insumo.cantidad * factor;
+        salidas.set(insumo.insumoId, (salidas.get(insumo.insumoId) ?? 0) + total);
+      }
+    }
+  }
+
+  const insumoIdsSalida = [...salidas.keys()].filter(
+    (id) => !nombrePorId.has(id),
+  );
+  if (insumoIdsSalida.length > 0) {
+    const { data: nombresInsumo, error: nombresError } = await supabase
+      .from("productos")
+      .select("id, nombre")
+      .in("id", insumoIdsSalida);
+    if (nombresError) {
+      return { error: mensajeLegible(nombresError.message) };
+    }
+    for (const fila of nombresInsumo ?? []) {
+      nombrePorId.set(fila.id, fila.nombre);
+    }
+  }
+
+  for (const [productoId, cantidadNecesaria] of salidas) {
     const { data: existencia, error } = await supabase
       .from("existencias")
       .select("id, cantidad")
-      .eq("producto_id", linea.productoId)
+      .eq("producto_id", productoId)
       .maybeSingle();
     if (error) return { error: mensajeLegible(error.message) };
     const stock = Number(existencia?.cantidad ?? 0);
-    if (stock < linea.cantidad) {
+    const etiqueta = nombrePorId.get(productoId) ?? "insumo";
+    if (stock < cantidadNecesaria) {
       return {
-        error: `No alcanza la existencia de ${linea.producto}. Hay ${stock}, pides ${linea.cantidad}.`,
+        error: `No alcanza la existencia de ${etiqueta}. Hay ${stock}, se necesitan ${cantidadNecesaria}.`,
       };
     }
   }
@@ -471,20 +580,19 @@ export async function cobrarVenta(datos: {
     .eq("id", datos.ventaId);
   if (estadoError) return { error: mensajeLegible(estadoError.message) };
 
-  for (const linea of detalle.venta.lineasDetalle) {
-    if (!linea.productoId) continue;
-
+  for (const [productoId, cantidad] of salidas) {
     const { data: existencia, error: leerError } = await supabase
       .from("existencias")
       .select("id, cantidad")
-      .eq("producto_id", linea.productoId)
+      .eq("producto_id", productoId)
       .maybeSingle();
     if (leerError) return { error: mensajeLegible(leerError.message) };
 
     const anterior = Number(existencia?.cantidad ?? 0);
-    const siguiente = anterior - linea.cantidad;
+    const siguiente = anterior - cantidad;
     if (siguiente < 0) {
-      return { error: `Existencia insuficiente para ${linea.producto}.` };
+      const etiqueta = nombrePorId.get(productoId) ?? "producto";
+      return { error: `Existencia insuficiente para ${etiqueta}.` };
     }
 
     if (existencia) {
@@ -494,17 +602,18 @@ export async function cobrarVenta(datos: {
         .eq("id", existencia.id);
       if (error) return { error: mensajeLegible(error.message) };
     } else {
-      return { error: `No hay fila de existencia para ${linea.producto}.` };
+      const etiqueta = nombrePorId.get(productoId) ?? "producto";
+      return { error: `No hay fila de existencia para ${etiqueta}.` };
     }
 
     const { error: movError } = await supabase
       .from("movimientos_inventario")
       .insert({
-        producto_id: linea.productoId,
+        producto_id: productoId,
         caja_id: detalle.venta.cajaId,
         venta_id: datos.ventaId,
         tipo: "salida_venta",
-        cantidad: linea.cantidad,
+        cantidad,
         nota: `Cobro folio ${detalle.venta.folio ?? datos.ventaId}`,
       });
     if (movError) return { error: mensajeLegible(movError.message) };
