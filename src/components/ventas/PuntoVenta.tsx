@@ -196,15 +196,23 @@ export function PuntoVenta({ session }: { session: Session }) {
       const { listaCajas, listaProductos, existenciasFilas, cobradas, ventaAbiertaId } =
         datos;
 
+      const mapExistencias = new Map(
+        existenciasFilas.map((f) => [f.producto_id, Number(f.cantidad)]),
+      );
+      const productosConInventario = listaProductos.filter(
+        (p) => (mapExistencias.get(p.id) ?? 0) > 0,
+      );
+
       setCajas(listaCajas);
       setCajaId((prev) => prev || listaCajas[0]?.id || "");
-      setProductos(listaProductos);
-      setProductoId((prev) => prev || listaProductos[0]?.id || "");
-      setExistencias(
-        new Map(
-          existenciasFilas.map((f) => [f.producto_id, Number(f.cantidad)]),
-        ),
-      );
+      setProductos(productosConInventario);
+      setProductoId((prev) => {
+        if (prev && productosConInventario.some((p) => p.id === prev)) {
+          return prev;
+        }
+        return productosConInventario[0]?.id ?? "";
+      });
+      setExistencias(mapExistencias);
       setVentasCobradas(
         cobradas.map((v) => ({
           id: v.id,
@@ -734,7 +742,10 @@ export function PuntoVenta({ session }: { session: Session }) {
           <section className="rounded-2xl border border-line bg-card px-5 py-6">
             <h2 className="text-lg font-semibold">Agregar al carrito</h2>
             {productos.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">No hay productos activos.</p>
+              <p className="mt-3 text-sm text-muted">
+                No hay productos con existencia disponible. Registra entradas en
+                inventario antes de vender.
+              </p>
             ) : (
               <form
                 onSubmit={(e) => void agregarLinea(e)}
