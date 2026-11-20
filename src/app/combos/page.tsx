@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CombosPage() {
   return (
-    <main className="app-main app-main--narrow">
+    <main className="app-main max-w-6xl">
       <ComboDescuentoCarrusel />
 
       <header className="flex flex-col gap-2">

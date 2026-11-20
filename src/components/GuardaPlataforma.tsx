@@ -67,8 +67,11 @@ export function GuardaPlataforma({ children }: GuardaPlataformaProps) {
     }
   }, [enLogin, next, pathname, router, session]);
 
+  /** En /login el formulario debe verse aunque getSession siga cargando. */
   const esperando =
-    session === undefined || (!session && !enLogin) || Boolean(session && enLogin);
+    (!enLogin && session === undefined) ||
+    (!session && !enLogin) ||
+    Boolean(session && enLogin);
 
   return (
     <>

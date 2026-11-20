@@ -17,7 +17,8 @@ export const modulos: Modulo[] = [
   },
   {
     nombre: "Ventas",
-    resumen: "Al cobrar, la venta es la salida de inventario. También se puede cancelar.",
+    resumen:
+      "Productos, combos con descuento o ambos en el mismo ticket; al cobrar, salida de inventario (componentes en combos).",
     tablas: ["ventas", "venta_lineas", "pagos", "cancelaciones"],
     ruta: "/ventas",
     listo: true,

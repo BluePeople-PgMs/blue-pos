@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "verify:recetas-schema": "bash scripts/verify-recetas-schema.sh"
+    "verify:recetas-schema": "bash scripts/verify-recetas-schema.sh",
+    "generate:portadas-venta": "node scripts/generate-combo-portadas.mjs --from-supabase",
+    "generate:combo-portadas": "node scripts/generate-combo-portadas.mjs --from-supabase"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.1",

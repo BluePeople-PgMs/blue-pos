@@ -54,6 +54,43 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Punto de venta: panel tipo concesión (inspirado en flujo visual de mostrador con imágenes). */
+.concesion-panel {
+  background: #121820;
+}
+
+.concesion-header {
+  background: linear-gradient(180deg, #1a2430 0%, #121820 100%);
+}
+
+.concesion-scroll {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: #f5c45155 transparent;
+}
+
+.concesion-card {
+  background: #1c2530;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.concesion-card-pie {
+  background: #161e28;
+}
+
+.concesion-btn-agregar {
+  background: linear-gradient(180deg, #f5c451 0%, #e8a82e 100%);
+  box-shadow: 0 4px 14px rgba(245, 196, 81, 0.35);
+}
+
+.concesion-btn-agregar:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.concesion-btn-agregar:disabled {
+  opacity: 0.55;
+}
+
 body {
   background: linear-gradient(
     165deg,

@@ -12,11 +12,11 @@ const slides = [
     contain: false,
   },
   {
-    src: "/combos/carrusel-1-producto.svg",
-    titulo: "1 producto",
-    subtitulo: "0% — agrega al menos 2 productos para 10%",
-    alt: "",
-    contain: false,
+    src: "/combos/selecciona-tu-combo.png",
+    titulo: "Selecciona tu combo",
+    subtitulo: "Elige un platillo y arma los componentes en el editor",
+    alt: "Selecciona tu combo",
+    contain: true,
   },
   {
     src: "/combos/descuento-10.png",

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase";
+import { mensajeErrorAuth } from "@/lib/authErrores";
 import { destinoSeguro } from "@/lib/rutas-protegidas";
 import { MENSAJE_FALTAN_VARIABLES } from "@/lib/mensajes";
 
@@ -148,7 +149,7 @@ export function LoginForm() {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        setError(mensajeErrorAuth(signInError.message));
         setEnviando(false);
         return;
       }
@@ -159,23 +160,20 @@ export function LoginForm() {
       });
 
       if (signUpError) {
-        setError(signUpError.message);
+        setError(mensajeErrorAuth(signUpError.message));
         setEnviando(false);
         return;
       }
 
       if (!data.session) {
+        setAviso("Cuenta creada. Iniciando sesión…");
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: correo,
           password,
         });
 
         if (signInError) {
-          setError(
-            signInError.message === "Email not confirmed"
-              ? "Cuenta creada. Si el proyecto exige confirmar correo, revisa tu bandeja."
-              : signInError.message,
-          );
+          setError(mensajeErrorAuth(signInError.message));
           setModo("entrar");
           setEnviando(false);
           return;

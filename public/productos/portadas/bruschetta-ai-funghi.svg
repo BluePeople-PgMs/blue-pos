@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Bruschetta ai funghi">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a3340"/>
+      <stop offset="100%" stop-color="#2a4f60"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <circle cx="64" cy="136" r="28" fill="#fde8e4" opacity="0.25"/><circle cx="54" cy="128" r="6" fill="#fff" opacity="0.5"/><circle cx="76" cy="132" r="5" fill="#fff" opacity="0.45"/>
+  
+  <text x="160" y="108" text-anchor="middle" fill="#ffffff" font-family="system-ui,sans-serif" font-size="26" font-weight="700">Bruschetta ai<tspan x="160" dy="32" font-size="22">funghi</tspan></text>
+  <text x="160" y="178" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-family="system-ui,sans-serif" font-size="12" letter-spacing="0.08em">BLUE POS · COMBO</text>
+</svg>

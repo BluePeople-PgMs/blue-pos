@@ -19,7 +19,10 @@ import {
   type ComboComponente,
   type ProductoResumen,
 } from "@/lib/combos";
-import { etiquetaTipoProducto } from "@/lib/catalogo/productos";
+import { ComboTarjetaCine } from "@/components/combos/ComboTarjetaCine";
+import { ComponenteTarjetaVisual } from "@/components/combos/ComponenteTarjetaVisual";
+import { ArticuloPresentacionVisual } from "@/components/ventas/ArticuloPresentacionVisual";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -38,6 +41,7 @@ export function CombosEditor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [precioCombo, setPrecioCombo] = useState<number | null>(null);
+  const [paso, setPaso] = useState<1 | 2>(1);
 
   const cargarDetalle = useCallback(async (selectedComboId: string) => {
     if (!selectedComboId) {
@@ -91,24 +95,23 @@ export function CombosEditor() {
         setCombos([]);
         return;
       }
-      const lista = data ?? [];
-      setCombos(lista);
-      const primero = lista[0]?.id ?? "";
-      if (!primero) return;
-      setComboId(primero);
-      await cargarDetalle(primero);
+      setCombos(data ?? []);
     })();
 
     return () => {
       activo = false;
     };
-    // La carga inicial no debe repetirse cuando cambia el detalle.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function onComboChange(nextId: string) {
+  function elegirCombo(nextId: string) {
     setComboId(nextId);
+    setPaso(2);
     void cargarDetalle(nextId);
+  }
+
+  function volverAElegirCombo() {
+    setPaso(1);
+    setEditingId(null);
   }
 
   async function onAgregar() {
@@ -184,48 +187,120 @@ export function CombosEditor() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <label htmlFor="combo" className="text-sm font-medium text-foreground">
-          Producto combo
-        </label>
-        <select
-          id="combo"
-          value={comboId}
-          onChange={(e) => onComboChange(e.target.value)}
-          disabled={loading || combos.length === 0}
-          className="rounded-xl border border-line bg-background px-4 py-3 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60"
+    <div className="flex flex-col gap-8">
+      <ol className="flex flex-wrap gap-3 text-sm font-medium">
+        <li
+          className={`rounded-full px-4 py-1.5 ${
+            paso === 1
+              ? "bg-accent text-white"
+              : "border border-line bg-card text-muted"
+          }`}
         >
-          {combos.length === 0 ? (
-            <option value="">Sin productos tipo combo</option>
-          ) : (
-            combos.map((combo) => (
-              <option key={combo.id} value={combo.id}>
-                {combo.nombre}
-                {combo.codigo ? ` · ${combo.codigo}` : ""}
-                {combo.precio != null ? ` · ${formatoMoneda(combo.precio)}` : ""}
-              </option>
-            ))
-          )}
-        </select>
-        {combos.length === 0 && !loading ? (
-          <p className="text-sm leading-6 text-muted">
-            Crea en el{" "}
-            <Link
-              href="/catalogos?tipo=combo"
-              className="font-semibold text-accent hover:underline"
-            >
-              catálogo de productos
-            </Link>{" "}
-            un artículo con{" "}
-            <span className="font-mono text-foreground">tipo = combo</span> y
-            vuelve aquí para armar componentes.
-          </p>
-        ) : null}
-      </div>
+          1. Selecciona tu combo
+        </li>
+        <li
+          className={`rounded-full px-4 py-1.5 ${
+            paso === 2
+              ? "bg-accent text-white"
+              : "border border-line bg-card text-muted"
+          }`}
+        >
+          2. Arma ingredientes
+        </li>
+      </ol>
 
-      {comboSeleccionado ? (
+      {paso === 1 ? (
+        <section className="concesion-panel overflow-hidden rounded-2xl">
+          <div className="relative mx-4 mt-4 aspect-[16/4] overflow-hidden rounded-xl sm:mx-5">
+            <Image
+              src="/combos/selecciona-tu-combo.png"
+              alt=""
+              fill
+              className="object-contain p-2"
+              sizes="(max-width: 896px) 100vw, 896px"
+            />
+          </div>
+          <header className="concesion-header px-5 pb-2 pt-4">
+            <h2 className="text-lg font-semibold text-white">
+              Elige el platillo combo
+            </h2>
+            <p className="text-sm text-white/70">
+              Toca una tarjeta para continuar y agregar los ingredientes.
+            </p>
+          </header>
+          {combos.length === 0 && !loading ? (
+            <p className="px-5 pb-8 text-sm text-white/70">
+              Crea un producto{" "}
+              <span className="font-mono">tipo = combo</span> en{" "}
+              <Link href="/catalogos?tipo=combo" className="text-[#f5c451] underline">
+                catálogo
+              </Link>
+              .
+            </p>
+          ) : (
+            <div className="concesion-scroll flex gap-4 overflow-x-auto px-5 py-5">
+              {combos.map((combo) => (
+                <ComboTarjetaCine
+                  key={combo.id}
+                  id={combo.id}
+                  nombre={combo.nombre}
+                  codigo={combo.codigo}
+                  precio={combo.precio}
+                  seleccionado={combo.id === comboId}
+                  disabled={loading || busy}
+                  onSeleccionar={elegirCombo}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {paso === 2 && comboSeleccionado ? (
         <>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="relative h-14 w-full max-w-xl overflow-hidden rounded-lg sm:h-16">
+              <Image
+                src="/combos/paso-ingredientes.svg"
+                alt=""
+                fill
+                className="object-cover object-left"
+                sizes="640px"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={volverAElegirCombo}
+              className="rounded-lg border border-line bg-card px-4 py-2 text-sm font-medium"
+            >
+              Cambiar combo
+            </button>
+          </div>
+
+          <article className="concesion-panel overflow-hidden rounded-2xl">
+            <div className="grid gap-4 p-5 sm:grid-cols-[12rem_1fr]">
+              <div className="relative mx-auto aspect-[4/5] w-full max-w-[12rem] overflow-hidden rounded-xl">
+                <ArticuloPresentacionVisual
+                  nombre={comboSeleccionado.nombre}
+                  esCombo
+                  descuentoPct={descuentoPct}
+                />
+              </div>
+              <div>
+                <p className="text-xs font-semibold tracking-widest text-[#f5c451] uppercase">
+                  Tu combo
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-white">
+                  {comboSeleccionado.nombre}
+                </h2>
+                {comboSeleccionado.precio != null ? (
+                  <p className="mt-2 font-mono text-lg text-[#f5c451]">
+                    {formatoMoneda(comboSeleccionado.precio)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </article>
           <section
             className="rounded-2xl border border-accent/30 bg-accent-soft px-5 py-4"
             aria-labelledby="descuento-combo-titulo"
@@ -305,169 +380,101 @@ export function CombosEditor() {
             ) : null}
           </section>
 
-          <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold">Componentes del combo</h2>
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold text-foreground">
+              Ingredientes en tu combo
+            </h2>
             {componentes.length === 0 ? (
               <p className="text-sm text-muted">
-                Este combo aún no tiene componentes en{" "}
-                <span className="font-mono text-foreground">combo_componentes</span>
-                .
+                Agrega productos del carril de abajo para armar el platillo.
               </p>
             ) : (
-              <ul className="divide-y divide-line rounded-xl border border-line bg-background">
-                {componentes.map((fila) => {
-                  const nombre =
-                    fila.productos?.nombre ?? "Producto sin nombre";
-                  const codigo = fila.productos?.codigo;
-                  const editando = editingId === fila.id;
-
-                  return (
-                    <li
-                      key={fila.id}
-                      className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">{nombre}</p>
-                        <p className="text-xs text-muted">
-                          {fila.productos?.tipo ? (
-                            <span className="mr-2 rounded bg-background px-1.5 py-0.5">
-                              {etiquetaTipoProducto(fila.productos.tipo)}
-                            </span>
-                          ) : null}
-                          {codigo ? (
-                            <span className="font-mono">{codigo}</span>
-                          ) : null}
-                          {fila.productos?.precio != null ? (
-                            <span className="ml-2 font-mono">
-                              {formatoMoneda(fila.productos.precio)}
-                            </span>
-                          ) : null}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {editando ? (
-                          <>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={cantidadEdit}
-                              onChange={(e) => setCantidadEdit(e.target.value)}
-                              className="w-24 rounded-lg border border-line px-2 py-1.5 text-sm"
-                              aria-label="Nueva cantidad"
-                            />
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => void onGuardarCantidad(fila.id)}
-                              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
-                            >
-                              Guardar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingId(null)}
-                              className="rounded-lg border border-line px-3 py-1.5 text-sm text-muted"
-                            >
-                              Cancelar
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-sm text-muted">
-                              Cantidad:{" "}
-                              <span className="font-mono text-foreground">
-                                {fila.cantidad}
-                              </span>
-                            </span>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => {
-                                setEditingId(fila.id);
-                                setCantidadEdit(String(fila.cantidad));
-                              }}
-                              className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-foreground disabled:opacity-60"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => void onQuitar(fila.id)}
-                              className="rounded-lg border border-danger/30 px-3 py-1.5 text-sm font-medium text-danger disabled:opacity-60"
-                            >
-                              Quitar
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
+              <ul className="concesion-scroll flex gap-4 overflow-x-auto py-1">
+                {componentes.map((fila) => (
+                  <ComponenteTarjetaVisual
+                    key={fila.id}
+                    nombre={fila.productos?.nombre ?? "Producto sin nombre"}
+                    codigo={fila.productos?.codigo ?? null}
+                    tipo={fila.productos?.tipo ?? null}
+                    precio={fila.productos?.precio ?? null}
+                    cantidad={fila.cantidad}
+                    editando={editingId === fila.id}
+                    cantidadEdit={cantidadEdit}
+                    busy={busy}
+                    onEditar={() => {
+                      setEditingId(fila.id);
+                      setCantidadEdit(String(fila.cantidad));
+                    }}
+                    onGuardar={() => void onGuardarCantidad(fila.id)}
+                    onCancelarEdit={() => setEditingId(null)}
+                    onQuitar={() => void onQuitar(fila.id)}
+                    onCantidadEditChange={setCantidadEdit}
+                  />
+                ))}
               </ul>
             )}
           </section>
 
-          <section className="flex flex-col gap-3 border-t border-line pt-6">
-            <h2 className="text-base font-semibold">Agregar componente</h2>
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="producto-componente"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Producto
-                </label>
-                <select
-                  id="producto-componente"
-                  value={productoId}
-                  onChange={(e) => setProductoId(e.target.value)}
-                  disabled={busy || productosComponente.length === 0}
-                  className="rounded-xl border border-line bg-background px-4 py-3 text-sm disabled:opacity-60"
-                >
-                  {productosComponente.length === 0 ? (
-                    <option value="">Sin productos disponibles</option>
-                  ) : (
-                    productosComponente.map((p) => (
-                      <option key={p.id} value={p.id}>
+          <section className="concesion-panel rounded-2xl px-5 py-5">
+            <h2 className="text-base font-semibold text-white">Sumar ingrediente</h2>
+            <p className="mt-1 text-sm text-white/70">
+              Elige del catálogo y confirma cantidad.
+            </p>
+            {productosComponente.length === 0 ? (
+              <p className="mt-3 text-sm text-white/60">
+                No hay más productos disponibles para este combo.
+              </p>
+            ) : (
+              <>
+                <div className="concesion-scroll mt-4 flex gap-3 overflow-x-auto">
+                  {productosComponente.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setProductoId(p.id)}
+                      className={`concesion-card w-[9rem] shrink-0 overflow-hidden rounded-lg ${
+                        productoId === p.id
+                          ? "ring-2 ring-[#f5c451]"
+                          : ""
+                      }`}
+                    >
+                      <div className="relative aspect-square w-full">
+                        <ArticuloPresentacionVisual
+                          nombre={p.nombre}
+                          esCombo={false}
+                          compacto
+                        />
+                      </div>
+                      <p className="concesion-card-pie truncate px-2 py-2 text-center text-[10px] text-white">
                         {p.nombre}
-                        {p.codigo ? ` · ${p.codigo}` : ""} ·{" "}
-                        {etiquetaTipoProducto(p.tipo)}
-                        {p.precio != null ? ` · ${formatoMoneda(p.precio)}` : ""}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="cantidad-nueva"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Cantidad
-                </label>
-                <input
-                  id="cantidad-nueva"
-                  type="text"
-                  inputMode="decimal"
-                  value={cantidadNueva}
-                  onChange={(e) => setCantidadNueva(e.target.value)}
-                  className="w-full rounded-xl border border-line bg-background px-4 py-3 text-sm sm:w-28"
-                />
-              </div>
-              <button
-                type="button"
-                disabled={
-                  busy ||
-                  !productoId ||
-                  productosComponente.length === 0
-                }
-                onClick={() => void onAgregar()}
-                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                Agregar
-              </button>
-            </div>
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 flex flex-wrap items-end gap-3">
+                  <label className="flex flex-col gap-1 text-sm text-white/80">
+                    Cantidad
+                    <input
+                      id="cantidad-nueva"
+                      type="text"
+                      inputMode="decimal"
+                      value={cantidadNueva}
+                      onChange={(e) => setCantidadNueva(e.target.value)}
+                      className="w-28 rounded-lg border border-white/20 bg-black/30 px-3 py-2 font-mono text-white"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={busy || !productoId}
+                    onClick={() => void onAgregar()}
+                    className="concesion-btn-agregar rounded-full px-6 py-2.5 text-sm font-bold"
+                  >
+                    Agregar al combo
+                  </button>
+                </div>
+              </>
+            )}
           </section>
         </>
       ) : null}

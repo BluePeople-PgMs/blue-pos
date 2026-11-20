@@ -1,16 +1,23 @@
 "use client";
 
+import { MenuConcesionVenta } from "@/components/ventas/MenuConcesionVenta";
+import { TIPO_PRODUCTO_COMBO } from "@/lib/catalogo/productos";
+import { armarMenuVentaVisual } from "@/lib/ventas/catalogoVentaVisual";
+import {
+  armarCombosParaVenta,
+  esProductoCombo,
+  notaLineaCombo,
+  requerimientosInventario,
+  salidasInventarioPorLinea,
+  type ComboParaVenta,
+  type ProductoVentaResumen,
+} from "@/lib/ventas/combosEnVenta";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-type Producto = {
-  id: string;
-  nombre: string;
-  codigo: string | null;
-  precio: number | null;
-};
+type Producto = ProductoVentaResumen;
 
 type Caja = {
   id: string;
@@ -62,6 +69,11 @@ type DatosBaseVentas =
   | {
       listaCajas: Caja[];
       listaProductos: Producto[];
+      filasComboComponentes: {
+        combo_id: string;
+        producto_id: string;
+        cantidad: number | string;
+      }[];
       existenciasFilas: { producto_id: string; cantidad: number | string }[];
       cobradas: {
         id: string;
@@ -75,14 +87,15 @@ type DatosBaseVentas =
 async function consultarDatosBaseVentas(
   client: SupabaseClient,
 ): Promise<DatosBaseVentas> {
-  const [cajasRes, productosRes, existenciasRes, cobradasRes, abiertaRes] =
+  const [cajasRes, productosRes, comboCompRes, existenciasRes, cobradasRes, abiertaRes] =
     await Promise.all([
       client.from("cajas").select("id, nombre").eq("activa", true).order("nombre"),
       client
         .from("productos")
-        .select("id, nombre, codigo, precio")
+        .select("id, nombre, codigo, tipo, precio")
         .eq("activo", true)
         .order("nombre"),
+      client.from("combo_componentes").select("combo_id, producto_id, cantidad"),
       client.from("existencias").select("producto_id, cantidad"),
       client
         .from("ventas")
@@ -100,6 +113,7 @@ async function consultarDatosBaseVentas(
 
   if (cajasRes.error) return { error: cajasRes.error.message };
   if (productosRes.error) return { error: productosRes.error.message };
+  if (comboCompRes.error) return { error: comboCompRes.error.message };
   if (existenciasRes.error) return { error: existenciasRes.error.message };
   if (cobradasRes.error) return { error: cobradasRes.error.message };
 
@@ -107,12 +121,14 @@ async function consultarDatosBaseVentas(
     id: p.id,
     nombre: p.nombre,
     codigo: p.codigo,
+    tipo: p.tipo,
     precio: p.precio == null ? null : Number(p.precio),
   }));
 
   return {
     listaCajas: cajasRes.data ?? [],
     listaProductos,
+    filasComboComponentes: comboCompRes.data ?? [],
     existenciasFilas: existenciasRes.data ?? [],
     cobradas: cobradasRes.data ?? [],
     ventaAbiertaId:
@@ -126,14 +142,19 @@ export function PuntoVenta({ session }: { session: Session }) {
   const supabase = getSupabaseBrowser()!;
   const [cajas, setCajas] = useState<Caja[]>([]);
   const [cajaId, setCajaId] = useState("");
+  const [catalogoProductos, setCatalogoProductos] = useState<Producto[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [combosVenta, setCombosVenta] = useState<ComboParaVenta[]>([]);
+  const [componentesPorComboId, setComponentesPorComboId] = useState(
+    () => new Map<string, { producto_id: string; cantidad: number }[]>(),
+  );
   const [existencias, setExistencias] = useState<Map<string, number>>(new Map());
   const [venta, setVenta] = useState<VentaAbierta | null>(null);
   const [lineas, setLineas] = useState<VentaLinea[]>([]);
   const [ventasCobradas, setVentasCobradas] = useState<VentaCobrada[]>([]);
 
-  const [productoId, setProductoId] = useState("");
-  const [cantidadLinea, setCantidadLinea] = useState("1");
+  const [articuloMenuId, setArticuloMenuId] = useState("");
+  const [cantidadMenu, setCantidadMenu] = useState("1");
   const [metodoPago, setMetodoPago] = useState("efectivo");
 
   const [cargando, setCargando] = useState(true);
@@ -201,25 +222,47 @@ export function PuntoVenta({ session }: { session: Session }) {
         return;
       }
 
-      const { listaCajas, listaProductos, existenciasFilas, cobradas, ventaAbiertaId } =
-        datos;
+      const {
+        listaCajas,
+        listaProductos,
+        filasComboComponentes,
+        existenciasFilas,
+        cobradas,
+        ventaAbiertaId,
+      } = datos;
 
       const mapExistencias = new Map(
         existenciasFilas.map((f) => [f.producto_id, Number(f.cantidad)]),
       );
       const productosConInventario = listaProductos.filter(
-        (p) => (mapExistencias.get(p.id) ?? 0) > 0,
+        (p) =>
+          p.tipo !== TIPO_PRODUCTO_COMBO && (mapExistencias.get(p.id) ?? 0) > 0,
+      );
+      const { combos, componentesPorComboId: mapCombos } = armarCombosParaVenta(
+        listaProductos,
+        filasComboComponentes,
+        mapExistencias,
+      );
+      const combosVendibles = combos.filter(
+        (c) =>
+          c.componentes.length > 0 &&
+          c.precioUnitario != null &&
+          c.combosDisponibles > 0,
       );
 
       setCajas(listaCajas);
       setCajaId((prev) => prev || listaCajas[0]?.id || "");
+      setCatalogoProductos(listaProductos);
       setProductos(productosConInventario);
-      setProductoId((prev) => {
-        if (prev && productosConInventario.some((p) => p.id === prev)) {
-          return prev;
-        }
-        return productosConInventario[0]?.id ?? "";
-      });
+      setCombosVenta(combosVendibles);
+      setComponentesPorComboId(mapCombos);
+      const menuIds = [
+        ...productosConInventario.map((p) => p.id),
+        ...combosVendibles.map((c) => c.id),
+      ];
+      setArticuloMenuId((prev) =>
+        prev && menuIds.includes(prev) ? prev : (menuIds[0] ?? ""),
+      );
       setExistencias(mapExistencias);
       setVentasCobradas(
         cobradas.map((v) => ({
@@ -265,7 +308,19 @@ export function PuntoVenta({ session }: { session: Session }) {
     };
   }, [aplicarDatosBase, session.user.id, supabase]);
 
-  const productosPorId = new Map(productos.map((p) => [p.id, p]));
+  const catalogoPorId = useMemo(
+    () => new Map(catalogoProductos.map((p) => [p.id, p])),
+    [catalogoProductos],
+  );
+  const tiposPorId = useMemo(
+    () => new Map(catalogoProductos.map((p) => [p.id, p.tipo])),
+    [catalogoProductos],
+  );
+  const productosPorId = catalogoPorId;
+  const articulosMenu = useMemo(
+    () => armarMenuVentaVisual(productos, combosVenta, existencias),
+    [productos, combosVenta, existencias],
+  );
 
   async function sincronizarTotal(ventaId: string) {
     const { data, error: lineasError } = await supabase
@@ -333,11 +388,10 @@ export function PuntoVenta({ session }: { session: Session }) {
       caja_id: data.caja_id,
     });
     setLineas([]);
-    setMensaje("Venta abierta. Agrega productos al carrito.");
+    setMensaje("Venta abierta. Agrega productos o combos al carrito.");
   }
 
-  async function agregarLinea(event: React.FormEvent) {
-    event.preventDefault();
+  async function agregarArticuloAlPedido() {
     setMensaje(null);
     setError(null);
 
@@ -346,19 +400,48 @@ export function PuntoVenta({ session }: { session: Session }) {
       return;
     }
 
-    const producto = productosPorId.get(productoId);
-    if (!producto) {
-      setError("Elige un producto.");
-      return;
-    }
-    if (producto.precio == null || producto.precio < 0) {
-      setError("El producto no tiene precio.");
+    const menu = articulosMenu.find((a) => a.id === articuloMenuId);
+    if (!menu) {
+      setError("Elige un artículo del menú.");
       return;
     }
 
-    const qty = Number(cantidadLinea);
+    const qty = Number(cantidadMenu);
     if (!Number.isFinite(qty) || qty <= 0) {
       setError("La cantidad debe ser mayor a cero.");
+      return;
+    }
+
+    if (menu.esCombo) {
+      await agregarComboAlPedido(menu.id, qty);
+      return;
+    }
+
+    await agregarProductoAlPedido(menu.id, qty);
+  }
+
+  async function agregarComboAlPedido(comboIdLinea: string, qty: number) {
+    if (!venta) {
+      return;
+    }
+    const combo = combosVenta.find((c) => c.id === comboIdLinea);
+    if (!combo) {
+      setError("Elige un combo.");
+      return;
+    }
+    if (combo.precioUnitario == null) {
+      setError("El combo no tiene precio calculable (revisa precios de componentes).");
+      return;
+    }
+    if (combo.componentes.length === 0) {
+      setError("El combo no tiene componentes configurados.");
+      return;
+    }
+
+    if (qty > combo.combosDisponibles) {
+      setError(
+        `Stock insuficiente para armar ${qty} combo(s). Máximo disponible: ${combo.combosDisponibles}.`,
+      );
       return;
     }
 
@@ -368,16 +451,17 @@ export function PuntoVenta({ session }: { session: Session }) {
       .from("venta_lineas")
       .insert({
         venta_id: venta.id,
-        producto_id: producto.id,
+        producto_id: combo.id,
         cantidad: qty,
-        precio_unitario: producto.precio,
+        precio_unitario: combo.precioUnitario,
+        notas: notaLineaCombo(combo.descuentoPct, combo.numProductos),
       })
       .select("id, producto_id, cantidad, precio_unitario, notas")
       .single();
 
     if (lineaError || !linea) {
       setProcesando(false);
-      setError(lineaError?.message ?? "No se pudo agregar la línea.");
+      setError(lineaError?.message ?? "No se pudo agregar el combo.");
       return;
     }
 
@@ -399,9 +483,65 @@ export function PuntoVenta({ session }: { session: Session }) {
         notas: linea.notas,
       },
     ]);
-    setCantidadLinea("1");
+    setCantidadMenu("1");
     setProcesando(false);
-    setMensaje("Producto agregado al carrito.");
+    setMensaje("Platillo agregado al pedido.");
+  }
+
+  async function agregarProductoAlPedido(productoIdLinea: string, qty: number) {
+    if (!venta) {
+      return;
+    }
+    const producto = productosPorId.get(productoIdLinea);
+    if (!producto) {
+      setError("Artículo no encontrado.");
+      return;
+    }
+    if (producto.precio == null || producto.precio < 0) {
+      setError("El artículo no tiene precio.");
+      return;
+    }
+
+  setProcesando(true);
+
+    const { data: linea, error: lineaError } = await supabase
+      .from("venta_lineas")
+      .insert({
+        venta_id: venta!.id,
+        producto_id: producto.id,
+        cantidad: qty,
+        precio_unitario: producto.precio,
+      })
+      .select("id, producto_id, cantidad, precio_unitario, notas")
+      .single();
+
+    if (lineaError || !linea) {
+      setProcesando(false);
+      setError(lineaError?.message ?? "No se pudo agregar la línea.");
+      return;
+    }
+
+    try {
+      await sincronizarTotal(venta!.id);
+    } catch (e) {
+      setProcesando(false);
+      setError(e instanceof Error ? e.message : "Error al actualizar el total.");
+      return;
+    }
+
+    setLineas((prev) => [
+      ...prev,
+      {
+        id: linea.id,
+        producto_id: linea.producto_id,
+        cantidad: Number(linea.cantidad),
+        precio_unitario: Number(linea.precio_unitario),
+        notas: linea.notas,
+      },
+    ]);
+    setCantidadMenu("1");
+    setProcesando(false);
+    setMensaje("Artículo agregado al pedido.");
   }
 
   async function quitarLinea(lineaId: string) {
@@ -476,15 +616,19 @@ export function PuntoVenta({ session }: { session: Session }) {
       return;
     }
 
-    for (const linea of lineas) {
-      if (!linea.producto_id) {
-        continue;
-      }
-      const stock = existencias.get(linea.producto_id) ?? 0;
-      if (stock < linea.cantidad) {
+    const requerido = requerimientosInventario(
+      lineas,
+      tiposPorId,
+      componentesPorComboId,
+    );
+    for (const [productoInventarioId, necesario] of requerido) {
+      const stock = existencias.get(productoInventarioId) ?? 0;
+      if (stock < necesario) {
         const nombre =
-          productosPorId.get(linea.producto_id)?.nombre ?? linea.producto_id;
-        setError(`Stock insuficiente para ${nombre}. Disponible: ${stock}.`);
+          catalogoPorId.get(productoInventarioId)?.nombre ?? productoInventarioId;
+        setError(
+          `Stock insuficiente para ${nombre}. Necesario: ${necesario}, disponible: ${stock}.`,
+        );
         return;
       }
     }
@@ -521,27 +665,39 @@ export function PuntoVenta({ session }: { session: Session }) {
         continue;
       }
 
-      const { error: movError } = await supabase.from("movimientos_inventario").insert({
-        producto_id: linea.producto_id,
-        caja_id: cajaId || venta.caja_id,
-        venta_id: venta.id,
-        tipo: "salida_venta",
-        cantidad: linea.cantidad,
-        nota: `Venta ${venta.folio ?? venta.id}`,
-      });
+      const esCombo = esProductoCombo(tiposPorId.get(linea.producto_id));
+      const salidas = salidasInventarioPorLinea(
+        { producto_id: linea.producto_id, cantidad: linea.cantidad },
+        esCombo,
+        componentesPorComboId.get(linea.producto_id),
+      );
+      const notaBase = esCombo
+        ? `Venta combo ${catalogoPorId.get(linea.producto_id)?.nombre ?? linea.producto_id}`
+        : `Venta ${venta.folio ?? venta.id}`;
 
-      if (movError) {
-        setProcesando(false);
-        setError(movError.message);
-        return;
-      }
+      for (const salida of salidas) {
+        const { error: movError } = await supabase.from("movimientos_inventario").insert({
+          producto_id: salida.producto_id,
+          caja_id: cajaId || venta.caja_id,
+          venta_id: venta.id,
+          tipo: "salida_venta",
+          cantidad: salida.cantidad,
+          nota: notaBase,
+        });
 
-      try {
-        await actualizarExistencia(linea.producto_id, -linea.cantidad);
-      } catch (e) {
-        setProcesando(false);
-        setError(e instanceof Error ? e.message : "Error al actualizar existencias.");
-        return;
+        if (movError) {
+          setProcesando(false);
+          setError(movError.message);
+          return;
+        }
+
+        try {
+          await actualizarExistencia(salida.producto_id, -salida.cantidad);
+        } catch (e) {
+          setProcesando(false);
+          setError(e instanceof Error ? e.message : "Error al actualizar existencias.");
+          return;
+        }
       }
     }
 
@@ -618,28 +774,36 @@ export function PuntoVenta({ session }: { session: Session }) {
         continue;
       }
       const qty = Number(linea.cantidad);
+      const esCombo = esProductoCombo(tiposPorId.get(linea.producto_id));
+      const salidas = salidasInventarioPorLinea(
+        { producto_id: linea.producto_id, cantidad: qty },
+        esCombo,
+        componentesPorComboId.get(linea.producto_id),
+      );
 
-      const { error: movError } = await supabase.from("movimientos_inventario").insert({
-        producto_id: linea.producto_id,
-        caja_id: ventaData.caja_id,
-        venta_id: ventaId,
-        tipo: "cancelacion",
-        cantidad: qty,
-        nota: `Cancelación ${ventaData.folio ?? ventaId}`,
-      });
+      for (const salida of salidas) {
+        const { error: movError } = await supabase.from("movimientos_inventario").insert({
+          producto_id: salida.producto_id,
+          caja_id: ventaData.caja_id,
+          venta_id: ventaId,
+          tipo: "cancelacion",
+          cantidad: salida.cantidad,
+          nota: `Cancelación ${ventaData.folio ?? ventaId}`,
+        });
 
-      if (movError) {
-        setProcesando(false);
-        setError(movError.message);
-        return;
-      }
+        if (movError) {
+          setProcesando(false);
+          setError(movError.message);
+          return;
+        }
 
-      try {
-        await actualizarExistencia(linea.producto_id, qty);
-      } catch (e) {
-        setProcesando(false);
-        setError(e instanceof Error ? e.message : "Error al devolver existencias.");
-        return;
+        try {
+          await actualizarExistencia(salida.producto_id, salida.cantidad);
+        } catch (e) {
+          setProcesando(false);
+          setError(e instanceof Error ? e.message : "Error al devolver existencias.");
+          return;
+        }
       }
     }
 
@@ -672,10 +836,8 @@ export function PuntoVenta({ session }: { session: Session }) {
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">Carrito y cobro</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Venta en estado <code className="font-mono text-xs">abierta</code>, cobro
-            con <code className="font-mono text-xs">salida_venta</code> y cancelación
-            con devolución a{" "}
-            <code className="font-mono text-xs">existencias</code>.
+            Menú visual tipo mostrador: ingredientes y platillos en el mismo carril de
+            imágenes. Los platillos aplican descuento por componentes al cobrar.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -757,63 +919,16 @@ export function PuntoVenta({ session }: { session: Session }) {
 
       {venta ? (
         <>
-          <section className="rounded-2xl border border-line bg-card px-5 py-6">
-            <h2 className="text-lg font-semibold">Agregar al carrito</h2>
-            {productos.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">
-                No hay productos con existencia disponible. Registra entradas en
-                inventario antes de vender.
-              </p>
-            ) : (
-              <form
-                onSubmit={(e) => void agregarLinea(e)}
-                className="mt-4 grid max-w-xl gap-4"
-              >
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium">Producto</span>
-                  <select
-                    value={productoId}
-                    onChange={(e) => setProductoId(e.target.value)}
-                    disabled={procesando}
-                    className="rounded-lg border border-line bg-background px-3 py-2"
-                  >
-                    {productos.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {etiquetaProducto(p.nombre, p.codigo)}
-                        {p.precio != null ? ` — ${formatoMoneda(p.precio)}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium">Cantidad</span>
-                  <input
-                    type="number"
-                    min="0.001"
-                    step="any"
-                    required
-                    value={cantidadLinea}
-                    onChange={(e) => setCantidadLinea(e.target.value)}
-                    disabled={procesando}
-                    className="rounded-lg border border-line bg-background px-3 py-2"
-                  />
-                </label>
-                <p className="text-xs text-muted">
-                  Existencia:{" "}
-                  <strong className="text-foreground">
-                    {existencias.get(productoId) ?? 0}
-                  </strong>
-                </p>
-                <button
-                  type="submit"
-                  disabled={procesando}
-                  className="w-fit rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                >
-                  Agregar línea
-                </button>
-              </form>
-            )}
-          </section>
+          <MenuConcesionVenta
+            articulos={articulosMenu}
+            articuloId={articuloMenuId}
+            onArticuloIdChange={setArticuloMenuId}
+            cantidad={cantidadMenu}
+            onCantidadChange={setCantidadMenu}
+            onAgregar={() => void agregarArticuloAlPedido()}
+            formatoMoneda={formatoMoneda}
+            procesando={procesando}
+          />
 
           <section className="rounded-2xl border border-line bg-card px-5 py-6">
             <h2 className="text-lg font-semibold">Líneas del carrito</h2>
@@ -834,15 +949,24 @@ export function PuntoVenta({ session }: { session: Session }) {
                   <tbody>
                     {lineas.map((linea) => {
                       const producto = linea.producto_id
-                        ? productosPorId.get(linea.producto_id)
+                        ? catalogoPorId.get(linea.producto_id)
                         : null;
                       const importe = linea.cantidad * linea.precio_unitario;
                       return (
                         <tr key={linea.id} className="border-b border-line/70">
                           <td className="py-2 pr-4">
-                            {producto
-                              ? etiquetaProducto(producto.nombre, producto.codigo)
-                              : "—"}
+                            {producto ? (
+                              <span>
+                                {etiquetaProducto(producto.nombre, producto.codigo)}
+                                {linea.notas ? (
+                                  <span className="mt-0.5 block text-xs text-muted">
+                                    {linea.notas}
+                                  </span>
+                                ) : null}
+                              </span>
+                            ) : (
+                              "—"
+                            )}
                           </td>
                           <td className="py-2 pr-4 font-mono tabular-nums">
                             {linea.cantidad}
