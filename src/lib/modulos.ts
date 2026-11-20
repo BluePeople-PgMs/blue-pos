@@ -4,6 +4,8 @@ export type Modulo = {
   tablas: string[];
   ruta?: string;
   listo?: boolean;
+  /** Solo visible para meseros (p. ej. POS fast food). */
+  soloMesero?: boolean;
 };
 
 export const modulos: Modulo[] = [
@@ -16,12 +18,13 @@ export const modulos: Modulo[] = [
     listo: true,
   },
   {
-    nombre: "Ventas",
+    nombre: "Pedidos",
     resumen:
       "Productos, combos con descuento o ambos en el mismo ticket; al cobrar, salida de inventario (componentes en combos).",
     tablas: ["ventas", "venta_lineas", "pagos", "cancelaciones"],
-    ruta: "/ventas",
+    ruta: "/pedidos",
     listo: true,
+    soloMesero: true,
   },
   {
     nombre: "Inventario",

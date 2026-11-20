@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import { mensajeErrorAuth } from "@/lib/authErrores";
+import { obtenerRolPerfil, ROL_MESERO } from "@/lib/roles";
+import { destinoSeguroParaRol } from "@/lib/rutas-por-rol";
 import { destinoSeguro } from "@/lib/rutas-protegidas";
 import { MENSAJE_FALTAN_VARIABLES } from "@/lib/mensajes";
 
@@ -106,10 +108,12 @@ export function LoginForm() {
 
     let activo = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (activo && session) {
-        router.replace(next ?? "/");
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!activo || !session) {
+        return;
       }
+      const rol = await obtenerRolPerfil(supabase, session.user.id);
+      router.replace(destinoSeguroParaRol(next, rol));
     });
 
     return () => {
@@ -181,7 +185,13 @@ export function LoginForm() {
       }
     }
 
-    router.replace(next ?? "/");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
+    const rol =
+      userId != null
+        ? await obtenerRolPerfil(supabase, userId)
+        : ROL_MESERO;
+    router.replace(destinoSeguroParaRol(next, rol));
     router.refresh();
     setEnviando(false);
   }

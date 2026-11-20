@@ -4,6 +4,7 @@ import { DM_Sans, Geist_Mono } from "next/font/google";
 import { BrandBackdrop } from "@/components/branding/BrandBackdrop";
 import { BarraSesion } from "@/components/BarraSesion";
 import { GuardaPlataforma } from "@/components/GuardaPlataforma";
+import { GuardaRol } from "@/components/GuardaRol";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -45,8 +46,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             }
           >
             <GuardaPlataforma>
-              <BarraSesion />
-              {children}
+              <GuardaRol>
+                <BarraSesion />
+                {children}
+              </GuardaRol>
             </GuardaPlataforma>
           </Suspense>
         </div>

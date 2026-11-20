@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowser } from "@/lib/supabase";
+import { obtenerRolPerfil, ROL_MESERO } from "@/lib/roles";
+import { destinoSeguroParaRol } from "@/lib/rutas-por-rol";
 import { destinoSeguro } from "@/lib/rutas-protegidas";
 
 type GuardaPlataformaProps = {
@@ -62,10 +64,12 @@ export function GuardaPlataforma({ children }: GuardaPlataformaProps) {
       return;
     }
 
-    if (session && enLogin) {
-      router.replace(next ?? "/");
+    if (session && enLogin && supabase) {
+      void obtenerRolPerfil(supabase, session.user.id).then((rol) => {
+        router.replace(destinoSeguroParaRol(next, rol ?? ROL_MESERO));
+      });
     }
-  }, [enLogin, next, pathname, router, session]);
+  }, [enLogin, next, pathname, router, session, supabase]);
 
   /** En /login el formulario debe verse aunque getSession siga cargando. */
   const esperando =

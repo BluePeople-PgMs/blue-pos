@@ -18,3 +18,17 @@ npm run verify:recetas-schema
 ```
 
 El script crea datos efímeros, comprueba unicidad y el embed FK, y los borra. Exit code **1** indica que falta aplicar la migración.
+
+## Roles mesero / administrador
+
+Aplica [`supabase/migrations/20261120120000_perfiles_rol.sql`](../supabase/migrations/20261120120000_perfiles_rol.sql) en el SQL Editor.
+
+Tras registrarse, cada usuario queda con `perfiles.rol = 'mesero'` (solo `/pedidos`). Para dar acceso de back office:
+
+```sql
+update public.perfiles
+set rol = 'administrador'
+where id = (
+  select id from auth.users where email = 'correo-del-admin@ejemplo.com'
+);
+```
