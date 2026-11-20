@@ -48,5 +48,7 @@ export const modulos: Modulo[] = [
     nombre: "Recetas",
     resumen: "Qué insumos lleva un producto preparado.",
     tablas: ["recetas", "receta_insumos"],
+    estado: "listo",
+    enlaces: [{ href: "/recetas", etiqueta: "Recetas" }],
   },
 ];

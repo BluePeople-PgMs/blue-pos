@@ -1,16 +1,31 @@
-import { PlantillaModulo } from "@/components/PlantillaModulo";
-import { menuModulos } from "@/lib/navegacion";
+import Link from "next/link";
+import { RecetasVista } from "@/components/recetas/RecetasVista";
 
-const modulo = menuModulos.find((m) => m.href === "/recetas")!;
+export const metadata = {
+  title: "Recetas · Blue POS 2.0",
+};
 
 export default function RecetasPage() {
   return (
-    <PlantillaModulo
-      titulo={modulo.nombre}
-      resumen={modulo.resumen}
-      tablas={modulo.tablas}
-      requiereSesion={modulo.requiereSesion}
-      aviso="Acceso abierto: no exige sesión."
-    />
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
+      <header className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
+            Recetas
+          </p>
+          <Link href="/" className="text-sm font-medium text-muted">
+            Inicio
+          </Link>
+        </div>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Insumos por comida preparada
+        </h1>
+        <p className="max-w-2xl text-base leading-7 text-muted">
+          Catálogo en las tablas recetas y receta_insumos: qué ingredientes y en
+          qué cantidad lleva cada platillo de la trattoria.
+        </p>
+      </header>
+      <RecetasVista />
+    </main>
   );
 }
