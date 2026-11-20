@@ -83,13 +83,15 @@ export function RecetasVista() {
 
   const seleccionada = recetas.find((receta) => receta.id === recetaId);
 
-  useEffect(() => {
-    if (!nuevoProductoId) return;
-    const preparado = preparados.find((p) => p.id === nuevoProductoId);
-    if (preparado && !nuevoNombre.trim()) {
-      setNuevoNombre(`Receta · ${preparado.nombre}`);
+  function elegirPreparado(productoId: string) {
+    setNuevoProductoId(productoId);
+    const preparado = preparados.find((p) => p.id === productoId);
+    if (preparado) {
+      setNuevoNombre((actual) =>
+        actual.trim() ? actual : `Receta · ${preparado.nombre}`,
+      );
     }
-  }, [nuevoProductoId, preparados, nuevoNombre]);
+  }
 
   async function guardarReceta(evento: React.FormEvent) {
     evento.preventDefault();
@@ -214,7 +216,7 @@ export function RecetasVista() {
             Comida preparada
             <select
               value={nuevoProductoId}
-              onChange={(evento) => setNuevoProductoId(evento.target.value)}
+              onChange={(evento) => elegirPreparado(evento.target.value)}
               className="rounded-xl border border-line bg-background px-3 py-2 text-base font-normal"
             >
               <option value="">Elige del catálogo</option>
