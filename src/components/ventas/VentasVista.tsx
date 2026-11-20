@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { VentasPosLayout } from "@/components/ventas/ventas-pos-layout";
+import {
+  VentasPosLayout,
+  type TipoCatalogoVentas,
+} from "@/components/ventas/ventas-pos-layout";
 import { useRol } from "@/components/contexto/RolContext";
 import {
   actualizarCantidadLinea,
@@ -110,9 +113,7 @@ export function VentasVista() {
   const [enlaceInventario, setEnlaceInventario] = useState(false);
   const [filtroLista, setFiltroLista] = useState<FiltroLista>("todas");
   const [busquedaProducto, setBusquedaProducto] = useState("");
-  const [tipoCatalogo, setTipoCatalogo] = useState<
-    "todos" | "comidas" | "empacados"
-  >("todos");
+  const [tipoCatalogo, setTipoCatalogo] = useState<TipoCatalogoVentas>("todos");
   const [categoriaFiltro, setCategoriaFiltro] = useState("todas");
 
   const recargar = useCallback(async () => {
@@ -163,18 +164,25 @@ export function VentasVista() {
   }, [ventas, filtroLista]);
 
   const categoriasMenu = useMemo(() => {
+    const fuente =
+      tipoCatalogo === "combos"
+        ? productos.filter((p) => p.tipo === "combo")
+        : productos.filter((p) => p.tipo !== "combo");
     const nombres = new Set(
-      productos.map((p) => p.categoria || "General").filter(Boolean),
+      fuente.map((p) => p.categoria || "General").filter(Boolean),
     );
     return [...nombres].sort((a, b) => a.localeCompare(b, "es"));
-  }, [productos]);
+  }, [productos, tipoCatalogo]);
 
   const productosMenu = useMemo(() => {
     const consulta = normalizar(busquedaProducto.trim());
     let base = productos.filter((p) => {
       if (tipoCatalogo === "comidas" && p.tipo !== "preparado") return false;
       if (tipoCatalogo === "empacados" && p.tipo !== "directo") return false;
+      if (tipoCatalogo === "combos" && p.tipo !== "combo") return false;
+      if (tipoCatalogo === "todos" && p.tipo === "combo") return false;
       if (
+        tipoCatalogo !== "combos" &&
         categoriaFiltro !== "todas" &&
         (p.categoria || "General") !== categoriaFiltro
       ) {
@@ -189,7 +197,7 @@ export function VentasVista() {
           normalizar(p.codigo).includes(consulta),
       );
     } else {
-      base = base.filter((p) => p.existencia > 0);
+      base = base.filter((p) => p.existencia > 0 || p.tipo === "combo");
     }
     return base;
   }, [productos, busquedaProducto, tipoCatalogo, categoriaFiltro]);
@@ -264,7 +272,11 @@ export function VentasVista() {
       publicarMensaje("Solo puedes agregar líneas a ventas abiertas.", "error");
       return;
     }
-    if (producto.existencia <= 0 && !busquedaProducto.trim()) {
+    if (
+      producto.tipo !== "combo" &&
+      producto.existencia <= 0 &&
+      !busquedaProducto.trim()
+    ) {
       publicarMensaje(
         `Sin existencia suficiente de ${producto.nombre}.`,
         "error",

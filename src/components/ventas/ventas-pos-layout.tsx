@@ -5,6 +5,8 @@ import { urlImagenCatalogo } from "@/lib/imagen-catalogo";
 
 type FiltroLista = "todas" | VentaLista["estado"];
 
+export type TipoCatalogoVentas = "todos" | "comidas" | "empacados" | "combos";
+
 export type VentasPosLayoutProps = {
   ventasVisibles: VentaLista[];
   ventaId: string | null;
@@ -17,8 +19,8 @@ export type VentasPosLayoutProps = {
   onSeleccionarVenta: (id: string) => void;
   busquedaProducto: string;
   setBusquedaProducto: (v: string) => void;
-  tipoCatalogo: "todos" | "comidas" | "empacados";
-  setTipoCatalogo: (v: "todos" | "comidas" | "empacados") => void;
+  tipoCatalogo: TipoCatalogoVentas;
+  setTipoCatalogo: (v: TipoCatalogoVentas) => void;
   categoriaFiltro: string;
   setCategoriaFiltro: (v: string) => void;
   categoriasMenu: string[];
@@ -167,6 +169,7 @@ export function VentasPosLayout({
                 ["todos", "Todo"],
                 ["comidas", "Platillos"],
                 ["empacados", "Empacados"],
+                ["combos", "Combos"],
               ] as const
             ).map(([valor, etiqueta]) => (
               <button
@@ -187,46 +190,54 @@ export function VentasPosLayout({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-          <div
-            className="mb-4 flex gap-2 overflow-x-auto pb-1"
-            role="tablist"
-            aria-label="Categorías"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={categoriaFiltro === "todas"}
-              onClick={() => setCategoriaFiltro("todas")}
-              className={`shrink-0 rounded-xl px-4 py-2 text-xs font-semibold ${
-                categoriaFiltro === "todas"
-                  ? "bg-olive text-white shadow-sm"
-                  : "bg-card text-muted ring-1 ring-line"
-              }`}
+          {tipoCatalogo !== "combos" ? (
+            <div
+              className="mb-4 flex gap-2 overflow-x-auto pb-1"
+              role="tablist"
+              aria-label="Categorías"
             >
-              Todas
-            </button>
-            {categoriasMenu.map((cat) => (
               <button
-                key={cat}
                 type="button"
                 role="tab"
-                aria-selected={categoriaFiltro === cat}
-                onClick={() => setCategoriaFiltro(cat)}
+                aria-selected={categoriaFiltro === "todas"}
+                onClick={() => setCategoriaFiltro("todas")}
                 className={`shrink-0 rounded-xl px-4 py-2 text-xs font-semibold ${
-                  categoriaFiltro === cat
+                  categoriaFiltro === "todas"
                     ? "bg-olive text-white shadow-sm"
                     : "bg-card text-muted ring-1 ring-line"
                 }`}
               >
-                {cat}
+                Todas
               </button>
-            ))}
-          </div>
+              {categoriasMenu.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  role="tab"
+                  aria-selected={categoriaFiltro === cat}
+                  onClick={() => setCategoriaFiltro(cat)}
+                  className={`shrink-0 rounded-xl px-4 py-2 text-xs font-semibold ${
+                    categoriaFiltro === cat
+                      ? "bg-olive text-white shadow-sm"
+                      : "bg-card text-muted ring-1 ring-line"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-4 text-center text-xs text-muted">
+              Combos con entrada, bebida y plato fuerte. El inventario baja al
+              cobrar.
+            </p>
+          )}
 
           {productosMenu.length === 0 ? (
             <p className="rounded-xl border border-dashed border-line bg-card px-4 py-10 text-center text-sm text-muted">
-              Ningún producto con stock en esta categoría. Prueba otra o busca
-              por nombre.
+              {tipoCatalogo === "combos"
+                ? "No hay combos activos. Pide a un administrador generarlos en el módulo Combos."
+                : "Ningún producto con stock en esta categoría. Prueba otra o busca por nombre."}
             </p>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -237,7 +248,8 @@ export function VentasPosLayout({
                   nombre: p.nombre,
                   categoria: p.categoria,
                 });
-                const sinStock = p.existencia <= 0;
+                const esCombo = p.tipo === "combo";
+                const sinStock = !esCombo && p.existencia <= 0;
                 return (
                   <li key={p.id}>
                     <article
@@ -264,9 +276,15 @@ export function VentasPosLayout({
                         <p className="mt-1 text-sm font-bold tabular-nums text-olive">
                           {dinero(p.precio)}
                         </p>
-                        <p className="text-[11px] text-muted">
-                          Stock {textoCantidad(p.existencia)} {p.unidad}
-                        </p>
+                        {esCombo ? (
+                          <p className="text-[11px] font-medium text-muted">
+                            Combo · 3 piezas
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted">
+                            Stock {textoCantidad(p.existencia)} {p.unidad}
+                          </p>
+                        )}
                         <button
                           type="button"
                           disabled={
