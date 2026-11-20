@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { BrandBackdrop } from "@/components/branding/BrandBackdrop";
 import { BarraSesion } from "@/components/BarraSesion";
 import { GuardaPlataforma } from "@/components/GuardaPlataforma";
 import "./globals.css";
@@ -27,24 +28,27 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="brand-canvas flex min-h-full flex-col">
-        <Suspense
-          fallback={
-            <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
-              <p
-                role="status"
-                className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"
-              >
-                Revisando sesión…
-              </p>
-            </main>
-          }
-        >
-          <GuardaPlataforma>
-            <BarraSesion />
-            {children}
-          </GuardaPlataforma>
-        </Suspense>
+      <body className="min-h-full">
+        <BrandBackdrop />
+        <div className="brand-app flex min-h-full flex-col">
+          <Suspense
+            fallback={
+              <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
+                <p
+                  role="status"
+                  className="brand-surface rounded-2xl px-5 py-4 text-sm text-muted"
+                >
+                  Revisando sesión…
+                </p>
+              </main>
+            }
+          >
+            <GuardaPlataforma>
+              <BarraSesion />
+              {children}
+            </GuardaPlataforma>
+          </Suspense>
+        </div>
       </body>
     </html>
   );

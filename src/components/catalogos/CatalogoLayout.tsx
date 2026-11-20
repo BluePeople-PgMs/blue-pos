@@ -22,24 +22,26 @@ export function CatalogoLayout({
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
+          <p className="brand-hero-eyebrow text-sm font-semibold tracking-[0.14em] uppercase">
             Catálogos
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">{titulo}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+          <h1 className="brand-hero-title text-3xl font-semibold tracking-tight">
+            {titulo}
+          </h1>
+          <p className="brand-hero-muted mt-2 max-w-2xl text-sm leading-6 text-muted">
             {descripcion}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-sm">
           <Link
             href="/catalogos"
-            className="rounded-lg border border-line bg-card px-3 py-2 font-medium hover:bg-background"
+            className="brand-surface rounded-lg px-3 py-2 font-medium hover:bg-white"
           >
             Hub de catálogos
           </Link>
           <Link
             href="/"
-            className="rounded-lg border border-line bg-card px-3 py-2 font-medium hover:bg-background"
+            className="brand-surface rounded-lg px-3 py-2 font-medium hover:bg-white"
           >
             Inicio
           </Link>

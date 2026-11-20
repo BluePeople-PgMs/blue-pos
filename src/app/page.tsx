@@ -23,13 +23,13 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
+        <p className="brand-hero-eyebrow text-sm font-semibold tracking-[0.14em] uppercase">
           Punto de venta
         </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+        <h1 className="brand-hero-title text-4xl font-semibold tracking-tight sm:text-5xl">
           Blue POS 2.0
         </h1>
-        <p className="max-w-2xl text-lg leading-8 text-muted">
+        <p className="brand-hero-muted max-w-2xl text-lg leading-8 text-muted">
           Cascarón compartido para varias computadoras. Desde aquí se abren
           catálogos, entradas de inventario, ventas y cancelaciones.
         </p>

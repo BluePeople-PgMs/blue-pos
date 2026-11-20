@@ -42,34 +42,38 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-}
-
-/* Geometric hero background (login + app shell) */
-.brand-canvas {
-  position: relative;
-  min-height: 100%;
-  isolation: isolate;
   background: linear-gradient(
     160deg,
     var(--brand-teal) 0%,
     #d4eff2 45%,
     #eef6f7 100%
   );
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-.brand-canvas::before,
-.brand-canvas::after {
-  content: "";
-  pointer-events: none;
+/* --- Fondo decorativo (siempre detrás del contenido) --- */
+.brand-backdrop {
   position: fixed;
+  inset: 0;
   z-index: 0;
-  opacity: 0.95;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.brand-canvas::before {
+.brand-app {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.brand-shape {
+  position: absolute;
+  display: block;
+  opacity: 0.38;
+}
+
+.brand-shape--navy {
   top: -8%;
   left: -15%;
   width: 75%;
@@ -79,7 +83,7 @@ body {
   clip-path: polygon(0 0, 100% 0, 72% 100%, 0 85%);
 }
 
-.brand-canvas::after {
+.brand-shape--coral {
   bottom: -5%;
   right: -10%;
   width: 70%;
@@ -89,9 +93,40 @@ body {
   clip-path: polygon(28% 0, 100% 15%, 100% 100%, 0 100%);
 }
 
-.brand-canvas > * {
+/* Login: canvas centrado sobre el mismo fondo */
+.brand-canvas {
   position: relative;
-  z-index: 1;
+  min-height: 100%;
+  flex: 1;
+}
+
+/* Superficies opacas para formularios/tablas */
+.brand-surface {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 28px rgba(26, 45, 66, 0.08);
+}
+
+/* Títulos legibles si quedan sobre zona navy/coral del fondo */
+.brand-hero-title {
+  color: var(--brand-navy-deep);
+  text-shadow:
+    0 0 1px #fff,
+    0 0 12px rgba(255, 255, 255, 0.95),
+    0 0 28px rgba(255, 255, 255, 0.85);
+}
+
+.brand-hero-eyebrow {
+  color: var(--accent);
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.9),
+    0 0 22px rgba(255, 255, 255, 0.75);
+}
+
+.brand-hero-muted {
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.92),
+    0 0 20px rgba(255, 255, 255, 0.8);
 }
 
 .login-photo {
@@ -155,6 +190,8 @@ body {
 }
 
 .brand-nav {
+  position: relative;
+  z-index: 2;
   background: linear-gradient(90deg, var(--brand-navy-deep), var(--brand-navy));
   border-bottom: 3px solid var(--brand-coral);
   color: #fff;
@@ -167,4 +204,10 @@ body {
 .brand-nav a:hover {
   color: #fff;
   text-decoration: underline;
+}
+
+/* Tarjetas del sistema: fondo sólido por defecto */
+main section.rounded-2xl.border-line.bg-card,
+main .rounded-2xl.border.border-line.bg-card {
+  background: rgba(255, 255, 255, 0.98);
 }
