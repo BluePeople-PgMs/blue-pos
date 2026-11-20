@@ -44,6 +44,43 @@ function IconLock({ className }: { className?: string }) {
   );
 }
 
+function IconEye({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconEyeOff({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,6 +93,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [recordar, setRecordar] = useState(true);
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -152,26 +190,22 @@ export function LoginForm() {
 
   const titulo = modo === "entrar" ? "Mi cuenta" : "Registro";
 
+  function irALogin() {
+    setModo("entrar");
+    setError(null);
+    setAviso(null);
+  }
+
   return (
-    <div className="relative w-full max-w-[22rem]">
-      <div className="relative mx-auto w-full pt-20">
-        <div
-          className="brand-login-shell absolute left-0 right-0 top-0 h-[7.5rem] overflow-hidden rounded-t-lg"
-          aria-hidden
-        >
-          <p className="px-6 pt-6 text-center text-lg font-semibold tracking-wide text-white">
+    <div className="relative w-full min-w-0 max-w-[22rem] sm:max-w-md">
+      <div className="brand-card overflow-hidden">
+        <header className="brand-login-shell px-6 py-4 text-center">
+          <h1 className="text-lg font-semibold tracking-wide text-white sm:text-xl">
             {titulo}
-          </p>
-        </div>
+          </h1>
+        </header>
 
-        <div
-          className="absolute left-1/2 top-8 z-10 flex h-[5.5rem] w-[5.5rem] -translate-x-1/2 items-center justify-center rounded-full border-[5px] border-white bg-brand-navy shadow-lg"
-          aria-hidden
-        >
-          <IconUser className="text-white/95" />
-        </div>
-
-        <div className="brand-card relative mt-0 px-8 pb-8 pt-24">
+        <div className="px-5 pb-7 pt-6 sm:px-8 sm:pb-8">
           <form onSubmit={onSubmit} className="flex flex-col gap-6">
             <div className="relative">
               <IconUser className="absolute left-0 top-2 text-muted" />
@@ -190,10 +224,10 @@ export function LoginForm() {
 
             <div className="flex items-start gap-3">
               <div className="relative min-w-0 flex-1">
-                <IconLock className="absolute left-0 top-2 text-muted" />
+                <IconLock className="pointer-events-none absolute left-0 top-2 text-muted" />
                 <input
                   id="login-password"
-                  type="password"
+                  type={mostrarContrasena ? "text" : "password"}
                   name="password"
                   autoComplete={
                     modo === "entrar" ? "current-password" : "new-password"
@@ -203,8 +237,26 @@ export function LoginForm() {
                   placeholder="Contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="brand-field-line"
+                  className="brand-field-line brand-field-line--toggle"
                 />
+                <button
+                  type="button"
+                  onClick={() => setMostrarContrasena((v) => !v)}
+                  className="absolute right-0 top-1.5 rounded-md p-1 text-muted transition-colors hover:bg-background hover:text-foreground"
+                  aria-label={
+                    mostrarContrasena
+                      ? "Ocultar contraseña"
+                      : "Mostrar contraseña"
+                  }
+                  aria-pressed={mostrarContrasena}
+                  aria-controls="login-password"
+                >
+                  {mostrarContrasena ? (
+                    <IconEyeOff className="shrink-0" />
+                  ) : (
+                    <IconEye className="shrink-0" />
+                  )}
+                </button>
               </div>
               <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
                 <input
@@ -223,22 +275,21 @@ export function LoginForm() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setModo(modo === "entrar" ? "registrar" : "entrar");
-                  setError(null);
-                  setAviso(null);
-                }}
-                className="font-medium text-brand-navy hover:underline"
-              >
-                {modo === "entrar"
-                  ? "Crear cuenta"
-                  : "Ya tengo cuenta"}
-              </button>
-              <span className="text-muted">¿Olvidaste la contraseña?</span>
-            </div>
+            {modo === "entrar" ? (
+              <div className="text-xs sm:text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModo("registrar");
+                    setError(null);
+                    setAviso(null);
+                  }}
+                  className="font-medium text-brand-navy hover:underline"
+                >
+                  Crear cuenta
+                </button>
+              </div>
+            ) : null}
 
             {error ? (
               <p
@@ -266,9 +317,19 @@ export function LoginForm() {
               {enviando
                 ? "Espera…"
                 : modo === "entrar"
-                  ? "Sign in"
+                  ? "Entrar"
                   : "Registrarse"}
             </button>
+
+            {modo === "registrar" ? (
+              <button
+                type="button"
+                onClick={irALogin}
+                className="brand-btn-secondary w-full px-4 py-3 text-sm font-medium"
+              >
+                Volver al login
+              </button>
+            ) : null}
           </form>
 
           <p className="mt-6 text-center text-[11px] text-muted">

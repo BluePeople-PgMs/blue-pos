@@ -19,7 +19,7 @@ export function CatalogoLayout({
   children,
 }: Props) {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-12">
+    <main className="app-main">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="brand-hero-eyebrow text-sm font-semibold tracking-[0.14em] uppercase">

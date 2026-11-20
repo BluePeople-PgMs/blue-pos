@@ -57,17 +57,33 @@ export function BarraSesion() {
 
   return (
     <header className="brand-nav">
-      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-3">
-        <Link href="/" className="text-sm font-semibold text-white">
-          Blue POS 2.0
-        </Link>
+      <div className="mx-auto flex w-full max-w-[72rem] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <Link href="/" className="shrink-0 text-base font-semibold text-white">
+            Blue POS 2.0
+          </Link>
+          <button
+            type="button"
+            onClick={cerrarSesion}
+            disabled={cerrando}
+            className="rounded-md border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white sm:hidden"
+          >
+            {cerrando ? "…" : "Salir"}
+          </button>
+        </div>
 
-        <nav className="flex flex-wrap items-center gap-3 text-sm">
+        <nav
+          className="brand-nav-scroll flex w-full min-w-0 items-center gap-3 overflow-x-auto pb-0.5 text-sm sm:w-auto sm:flex-wrap sm:overflow-visible"
+          aria-label="Módulos"
+        >
           <Link href="/catalogos" className="font-medium">
             Catálogos
           </Link>
           <Link href="/combos" className="font-medium">
             Combos
+          </Link>
+          <Link href="/recetas" className="font-medium">
+            Recetas
           </Link>
           <Link href="/inventario" className="font-medium">
             Inventario
@@ -75,9 +91,9 @@ export function BarraSesion() {
           <Link href="/ventas" className="font-medium">
             Ventas
           </Link>
-          <span className="text-white/75">
-            Sesión:{" "}
-            <span className="font-medium text-white">
+          <span className="hidden text-white/80 md:inline">
+            <span className="sr-only">Sesión: </span>
+            <span className="max-w-[12rem] truncate font-medium text-white lg:max-w-xs">
               {session.user.email ?? session.user.id}
             </span>
           </span>
@@ -85,7 +101,7 @@ export function BarraSesion() {
             type="button"
             onClick={cerrarSesion}
             disabled={cerrando}
-            className="rounded-md bg-brand-coral px-3 py-1.5 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="hidden rounded-md bg-white/15 px-3 py-1.5 font-semibold text-white transition-opacity hover:bg-white/25 disabled:opacity-60 sm:inline"
           >
             {cerrando ? "Saliendo…" : "Cerrar sesión"}
           </button>

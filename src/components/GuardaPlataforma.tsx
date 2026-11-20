@@ -73,7 +73,7 @@ export function GuardaPlataforma({ children }: GuardaPlataformaProps) {
   return (
     <>
       {esperando ? (
-        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
+        <main className="app-main">
           <p
             role="status"
             className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"

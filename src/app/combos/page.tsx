@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CombosPage() {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <main className="app-main app-main--narrow">
       <ComboDescuentoCarrusel />
 
       <header className="flex flex-col gap-2">

@@ -1,19 +1,21 @@
-import { BrandCanvas } from "@/components/branding/BrandCanvas";
 import { LoginForm } from "@/components/LoginForm";
 import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
-    <BrandCanvas center className="login-photo">
-      <Suspense
-        fallback={
-          <p className="text-sm text-brand-navy" role="status">
-            Cargando formulario…
-          </p>
-        }
-      >
-        <LoginForm />
-      </Suspense>
-    </BrandCanvas>
+    <div className="login-scene">
+      <div className="login-scene__backdrop" aria-hidden />
+      <div className="login-scene__content">
+        <Suspense
+          fallback={
+            <p className="text-sm text-muted" role="status">
+              Cargando formulario…
+            </p>
+          }
+        >
+          <LoginForm />
+        </Suspense>
+      </div>
+    </div>
   );
 }

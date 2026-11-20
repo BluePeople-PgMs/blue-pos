@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 import { BrandBackdrop } from "@/components/branding/BrandBackdrop";
 import { BarraSesion } from "@/components/BarraSesion";
 import { GuardaPlataforma } from "@/components/GuardaPlataforma";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -26,14 +27,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <BrandBackdrop />
         <div className="brand-app flex min-h-full flex-col">
           <Suspense
             fallback={
-              <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
+              <main className="app-main">
                 <p
                   role="status"
                   className="brand-surface rounded-2xl px-5 py-4 text-sm text-muted"

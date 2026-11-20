@@ -943,7 +943,7 @@ export function PuntoVenta({ session }: { session: Session }) {
 
       {cancelarModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-navy-deep/50 p-4"
+          className="overlay-scrim fixed inset-0 z-50 flex items-center justify-center p-4"
           role="presentation"
           onClick={cerrarModalCancelar}
         >
@@ -987,7 +987,7 @@ export function PuntoVenta({ session }: { session: Session }) {
                         prev ? { ...prev, paso: 2 } : prev,
                       )
                     }
-                    className="rounded-lg bg-brand-coral px-4 py-2 text-sm font-semibold text-white"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white"
                   >
                     Sí, continuar
                   </button>
