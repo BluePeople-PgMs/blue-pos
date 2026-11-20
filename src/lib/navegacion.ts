@@ -41,7 +41,7 @@ export const menuModulos: ItemMenu[] = [
   {
     nombre: "Ventas",
     href: "/ventas",
-    resumen: "Cobro de ventas y líneas de ticket.",
+    resumen: "Abrir ventas, agregar productos y cobrar.",
     tablas: ["ventas", "venta_lineas"],
     requiereSesion: true,
   },

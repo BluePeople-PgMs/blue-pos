@@ -20,13 +20,12 @@ export default function VentasPage() {
             </Link>
           </div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Cobro de ticket
+            Punto de cobro
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted">
-            Arma una venta abierta con productos del catálogo. Usa el filtro
-            (Todas, Abiertas, Pagadas, Canceladas) sobre la lista. Al cobrar, el
-            estado pasa a cobrada, se guarda el pago y el inventario sale con
-            salida_venta.
+            Arma el carrito, cobra con el método que prefieras y revisa el
+            impacto en inventario. Filtra la lista por abiertas, pagadas o
+            canceladas.
           </p>
         </header>
         <VentasVista />
