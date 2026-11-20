@@ -68,6 +68,7 @@ const POR_CATEGORIA: Record<string, number[]> = {
   "Bebidas empacadas": [COMIDA.vino, COMIDA.bebida, COMIDA.cafe],
   Despensa: [COMIDA.conservas, COMIDA.aceite, COMIDA.queso],
   Ingredientes: [COMIDA.ensalada, COMIDA.verduras, COMIDA.aceite],
+  Combos: [COMIDA.pizza, COMIDA.antipasto, COMIDA.bebida],
 };
 
 /** Los patrones más específicos van primero (p. ej. arancini antes que ragù). */

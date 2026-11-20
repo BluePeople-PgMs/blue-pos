@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { ComponentType } from "react";
+import { useState, type ComponentType } from "react";
 import type { MetodoPago, ProductoVenta, VentaDetalle, VentaLista } from "@/lib/ventas";
 import { urlImagenCatalogo } from "@/lib/imagen-catalogo";
 
@@ -83,29 +83,66 @@ export function VentasPosLayout({
   METODOS,
 }: VentasPosLayoutProps) {
   const ventaAbierta = venta?.estado === "abierta";
+  const [listaOrdenesAbierta, setListaOrdenesAbierta] = useState(false);
 
   return (
     <div className="grid min-h-[min(720px,calc(100vh-11rem))] gap-3 lg:grid-cols-[minmax(200px,220px)_minmax(0,1fr)_minmax(300px,360px)] lg:gap-4">
-      <aside className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-line bg-card p-3 shadow-sm lg:max-h-[calc(100vh-10rem)]">
-        <EncabezadoOrdens
-          puedeOperar={puedeOperar}
-          enviando={enviando}
-          onNuevaVenta={onNuevaVenta}
-        />
-        <FiltroVentas
-          filtroLista={filtroLista}
-          setFiltroLista={setFiltroLista}
-        />
-        <ListaVentas
-          ventas={ventasVisibles}
-          ventaId={ventaId}
-          puedeOperar={puedeOperar}
-          enviando={enviando}
-          onNuevaVenta={onNuevaVenta}
-          onSeleccionar={onSeleccionarVenta}
-          dinero={dinero}
-          InsigniaEstado={InsigniaEstado}
-        />
+      <aside
+        className={`flex flex-col gap-3 overflow-hidden rounded-2xl border border-line bg-card p-3 shadow-sm lg:max-h-[calc(100vh-10rem)] ${
+          listaOrdenesAbierta ? "min-h-0" : "self-start"
+        }`}
+      >
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setListaOrdenesAbierta((abierta) => !abierta)}
+            aria-expanded={listaOrdenesAbierta}
+            aria-controls="lista-ordenes-ventas"
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1 text-left hover:bg-background/80"
+          >
+            <h2 className="text-sm font-bold">Órdenes</h2>
+            <span className="sr-only">
+              {listaOrdenesAbierta
+                ? "Ocultar lista de órdenes"
+                : "Mostrar lista de órdenes"}
+            </span>
+            <IconoFlechaOrdenes
+              abierta={listaOrdenesAbierta}
+              className="ml-auto shrink-0 text-olive"
+            />
+          </button>
+          <button
+            type="button"
+            disabled={!puedeOperar || enviando}
+            onClick={onNuevaVenta}
+            className="shrink-0 rounded-lg bg-olive px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-50"
+          >
+            + Nuevo
+          </button>
+        </div>
+        {listaOrdenesAbierta ? (
+          <>
+            <FiltroVentas
+              filtroLista={filtroLista}
+              setFiltroLista={setFiltroLista}
+            />
+            <ListaVentas
+              id="lista-ordenes-ventas"
+              ventas={ventasVisibles}
+              ventaId={ventaId}
+              puedeOperar={puedeOperar}
+              enviando={enviando}
+              onNuevaVenta={onNuevaVenta}
+              onSeleccionar={onSeleccionarVenta}
+              dinero={dinero}
+              InsigniaEstado={InsigniaEstado}
+            />
+          </>
+        ) : (
+          <p className="text-[11px] leading-snug text-muted">
+            Pulsa la flecha para ver y cambiar de pedido.
+          </p>
+        )}
       </aside>
 
       <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-line bg-[#f7f8f6] shadow-sm">
@@ -396,27 +433,28 @@ export function VentasPosLayout({
   );
 }
 
-function EncabezadoOrdens({
-  puedeOperar,
-  enviando,
-  onNuevaVenta,
+function IconoFlechaOrdenes({
+  abierta,
+  className = "",
 }: {
-  puedeOperar: boolean;
-  enviando: boolean;
-  onNuevaVenta: () => void;
+  abierta: boolean;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <h2 className="text-sm font-bold">Órdenes</h2>
-      <button
-        type="button"
-        disabled={!puedeOperar || enviando}
-        onClick={onNuevaVenta}
-        className="rounded-lg bg-olive px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-50"
-      >
-        + Nuevo
-      </button>
-    </div>
+    <svg
+      aria-hidden
+      viewBox="0 0 20 20"
+      className={`size-5 transition-transform duration-200 ${
+        abierta ? "rotate-180" : ""
+      } ${className}`}
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
   );
 }
 
@@ -456,6 +494,7 @@ function FiltroVentas({
 }
 
 function ListaVentas({
+  id,
   ventas,
   ventaId,
   puedeOperar,
@@ -465,6 +504,7 @@ function ListaVentas({
   dinero,
   InsigniaEstado,
 }: {
+  id: string;
   ventas: VentaLista[];
   ventaId: string | null;
   puedeOperar: boolean;
@@ -476,7 +516,10 @@ function ListaVentas({
 }) {
   if (ventas.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-line px-2 py-6 text-center text-xs text-muted">
+      <div
+        id={id}
+        className="rounded-lg border border-dashed border-line px-2 py-6 text-center text-xs text-muted"
+      >
         Sin pedidos con este filtro.
         <button
           type="button"
@@ -490,7 +533,10 @@ function ListaVentas({
     );
   }
   return (
-    <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-0.5">
+    <ul
+      id={id}
+      className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-0.5"
+    >
       {ventas.map((v) => {
         const activa = v.id === ventaId;
         return (

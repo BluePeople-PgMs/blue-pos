@@ -96,7 +96,7 @@ export async function leerCatalogoVentas() {
         .from("productos")
         .select("id, nombre, codigo, tipo, precio, unidad_id, categoria_id")
         .eq("activo", true)
-        .in("tipo", ["preparado", "directo"]),
+        .in("tipo", ["preparado", "directo", "combo"]),
       supabase.from("unidades").select("id, abreviatura, nombre"),
       supabase.from("existencias").select("producto_id, cantidad"),
       supabase.from("categorias").select("id, nombre"),
@@ -137,7 +137,9 @@ export async function leerCatalogoVentas() {
       categoria: categoriaNombre,
       precio: Number(p.precio ?? 0),
       unidad: unidad?.abreviatura ?? unidad?.nombre ?? "",
-      existencia: existencias.get(p.id) ?? 0,
+      existencia:
+        existencias.get(p.id) ??
+        (p.tipo === "combo" ? 1 : 0),
     };
   });
 
@@ -484,6 +486,47 @@ export async function eliminarLineaVenta(datos: {
   return sincronizarTotalVenta(supabase, datos.ventaId);
 }
 
+type RecetaPlato = {
+  rendimiento: number;
+  lineas: { insumoId: string; cantidad: number }[];
+};
+
+function acumularSalidaDesdeProducto(
+  productoId: string,
+  cantidad: number,
+  tipoPorId: Map<string, string>,
+  recetaPorPlato: Map<string, RecetaPlato>,
+  salidas: Map<string, number>,
+  nombrePorId: Map<string, string>,
+): string | null {
+  const tipo = tipoPorId.get(productoId);
+
+  if (tipo === "directo") {
+    salidas.set(productoId, (salidas.get(productoId) ?? 0) + cantidad);
+    return null;
+  }
+
+  if (tipo === "preparado") {
+    const receta = recetaPorPlato.get(productoId);
+    const nombre = nombrePorId.get(productoId) ?? "platillo";
+    if (!receta || receta.lineas.length === 0) {
+      return `No hay receta cargada para ${nombre}. Corre npm run sembrar:recetas.`;
+    }
+    const factor = cantidad / receta.rendimiento;
+    for (const insumo of receta.lineas) {
+      const total = insumo.cantidad * factor;
+      salidas.set(insumo.insumoId, (salidas.get(insumo.insumoId) ?? 0) + total);
+    }
+    return null;
+  }
+
+  if (tipo === "combo") {
+    return "Configuración de combo inválida en la venta.";
+  }
+
+  return null;
+}
+
 export async function cobrarVenta(datos: {
   ventaId: string;
   metodo: MetodoPago;
@@ -503,14 +546,65 @@ export async function cobrarVenta(datos: {
     return { error: "Agrega al menos una línea antes de cobrar." };
   }
 
-  const productoIds = detalle.venta.lineasDetalle
+  const productoIdsLinea = detalle.venta.lineasDetalle
     .map((linea) => linea.productoId)
     .filter((id): id is string => Boolean(id));
+
+  const { data: productosLinea, error: productosLineaError } = await supabase
+    .from("productos")
+    .select("id, nombre, tipo")
+    .in("id", productoIdsLinea);
+  if (productosLineaError) {
+    return { error: mensajeLegible(productosLineaError.message) };
+  }
+
+  const tipoLinea = new Map(
+    (productosLinea ?? []).map((producto) => [producto.id, producto.tipo]),
+  );
+
+  const comboIdsEnVenta = productoIdsLinea.filter(
+    (id) => tipoLinea.get(id) === "combo",
+  );
+
+  const componentesPorCombo = new Map<
+    string,
+    { productoId: string; cantidad: number }[]
+  >();
+
+  if (comboIdsEnVenta.length > 0) {
+    const { data: filasComponentes, error: compError } = await supabase
+      .from("combo_componentes")
+      .select("combo_id, producto_id, cantidad")
+      .in("combo_id", comboIdsEnVenta);
+
+    if (compError) {
+      return { error: mensajeLegible(compError.message) };
+    }
+
+    for (const fila of filasComponentes ?? []) {
+      if (!fila.combo_id || !fila.producto_id) continue;
+      const lista = componentesPorCombo.get(fila.combo_id) ?? [];
+      lista.push({
+        productoId: fila.producto_id,
+        cantidad: Number(fila.cantidad ?? 1),
+      });
+      componentesPorCombo.set(fila.combo_id, lista);
+    }
+  }
+
+  const idsComponentes = [
+    ...new Set(
+      [...componentesPorCombo.values()]
+        .flat()
+        .map((pieza) => pieza.productoId),
+    ),
+  ];
+  const idsParaTipos = [...new Set([...productoIdsLinea, ...idsComponentes])];
 
   const { data: productosVenta, error: productosError } = await supabase
     .from("productos")
     .select("id, nombre, tipo")
-    .in("id", productoIds);
+    .in("id", idsParaTipos);
   if (productosError) {
     return { error: mensajeLegible(productosError.message) };
   }
@@ -522,14 +616,11 @@ export async function cobrarVenta(datos: {
     (productosVenta ?? []).map((producto) => [producto.id, producto.nombre]),
   );
 
-  const preparadoIds = productoIds.filter(
+  const preparadoIds = idsParaTipos.filter(
     (id) => tipoPorId.get(id) === "preparado",
   );
 
-  const recetaPorPlato = new Map<
-    string,
-    { rendimiento: number; lineas: { insumoId: string; cantidad: number }[] }
-  >();
+  const recetaPorPlato = new Map<string, RecetaPlato>();
 
   if (preparadoIds.length > 0) {
     const { data: recetas, error: recetasError } = await supabase
@@ -573,27 +664,37 @@ export async function cobrarVenta(datos: {
     if (!linea.productoId) continue;
     const tipo = tipoPorId.get(linea.productoId);
 
-    if (tipo === "directo") {
-      salidas.set(
-        linea.productoId,
-        (salidas.get(linea.productoId) ?? 0) + linea.cantidad,
-      );
+    if (tipo === "combo") {
+      const partes = componentesPorCombo.get(linea.productoId) ?? [];
+      if (partes.length === 0) {
+        return {
+          error: `El combo «${linea.producto}» no tiene componentes. Genera combos en el módulo Combos.`,
+        };
+      }
+      for (const parte of partes) {
+        const cantidadPieza = linea.cantidad * parte.cantidad;
+        const errorPieza = acumularSalidaDesdeProducto(
+          parte.productoId,
+          cantidadPieza,
+          tipoPorId,
+          recetaPorPlato,
+          salidas,
+          nombrePorId,
+        );
+        if (errorPieza) return { error: errorPieza };
+      }
       continue;
     }
 
-    if (tipo === "preparado") {
-      const receta = recetaPorPlato.get(linea.productoId);
-      if (!receta || receta.lineas.length === 0) {
-        return {
-          error: `No hay receta cargada para ${linea.producto}. Corre npm run sembrar:recetas.`,
-        };
-      }
-      const factor = linea.cantidad / receta.rendimiento;
-      for (const insumo of receta.lineas) {
-        const total = insumo.cantidad * factor;
-        salidas.set(insumo.insumoId, (salidas.get(insumo.insumoId) ?? 0) + total);
-      }
-    }
+    const errorLinea = acumularSalidaDesdeProducto(
+      linea.productoId,
+      linea.cantidad,
+      tipoPorId,
+      recetaPorPlato,
+      salidas,
+      nombrePorId,
+    );
+    if (errorLinea) return { error: errorLinea };
   }
 
   const insumoIdsSalida = [...salidas.keys()].filter(
