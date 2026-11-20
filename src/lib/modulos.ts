@@ -41,8 +41,11 @@ export const modulos: Modulo[] = [
   },
   {
     nombre: "Combos",
-    resumen: "Qué productos incluye un combo.",
-    tablas: ["combo_componentes"],
+    resumen:
+      "Combos con entrada, bebida y plato fuerte desde comidas y productos terminados.",
+    tablas: ["productos", "combo_componentes"],
+    estado: "listo",
+    enlaces: [{ href: "/combos", etiqueta: "Menú de combos" }],
   },
   {
     nombre: "Recetas",

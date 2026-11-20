@@ -19,8 +19,9 @@ export const menuModulos: ItemMenu[] = [
   {
     nombre: "Combos",
     href: "/combos",
-    resumen: "Qué productos incluye un combo.",
-    tablas: ["combo_componentes"],
+    resumen:
+      "Combos con entrada, bebida y plato fuerte desde los catálogos.",
+    tablas: ["productos", "combo_componentes"],
     requiereSesion: false,
   },
   {
