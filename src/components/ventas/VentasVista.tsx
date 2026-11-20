@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  actualizarCantidadLinea,
   agregarLinea,
   cancelarVentaAbierta,
+  eliminarLineaVenta,
   cancelarVentaCobrada,
   cobrarVenta,
   crearVentaAbierta,
@@ -202,6 +204,37 @@ export function VentasVista() {
     const actual = Number(cantidad);
     const siguiente = (Number.isFinite(actual) ? actual : 0) + delta;
     setCantidad(String(Math.max(1, siguiente)));
+  }
+
+  async function cambiarCantidadLinea(lineaId: string, cantidad: number) {
+    if (!ventaId) return;
+    setEnviando(true);
+    const { error } = await actualizarCantidadLinea({
+      ventaId,
+      lineaId,
+      cantidad,
+    });
+    setEnviando(false);
+    if (error) {
+      publicarMensaje(error, "error");
+      return;
+    }
+    await recargar();
+    await cargarVenta(ventaId);
+  }
+
+  async function quitarLinea(lineaId: string) {
+    if (!ventaId) return;
+    setEnviando(true);
+    const { error } = await eliminarLineaVenta({ ventaId, lineaId });
+    setEnviando(false);
+    if (error) {
+      publicarMensaje(error, "error");
+      return;
+    }
+    await recargar();
+    await cargarVenta(ventaId);
+    publicarMensaje("Línea quitada del carrito.", "ok");
   }
 
   async function agregar() {
@@ -497,28 +530,89 @@ export function VentasVista() {
                 <h3 className="text-sm font-semibold text-muted">Carrito</h3>
                 {venta.lineasDetalle.length > 0 ? (
                   <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-background">
-                    {venta.lineasDetalle.map((linea) => (
-                      <li
-                        key={linea.id}
-                        className="flex items-start justify-between gap-4 px-4 py-3 text-sm"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-medium leading-snug">
-                            {linea.producto}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted">
-                            {textoCantidad(linea.cantidad)} ×{" "}
-                            {dinero(linea.precioUnitario)}
-                            {linea.codigo ? (
-                              <span className="font-mono"> · {linea.codigo}</span>
-                            ) : null}
-                          </p>
-                        </div>
-                        <span className="shrink-0 font-semibold tabular-nums">
-                          {dinero(linea.subtotal)}
-                        </span>
-                      </li>
-                    ))}
+                    {venta.lineasDetalle.map((linea) => {
+                      const editable = venta.estado === "abierta";
+                      return (
+                        <li
+                          key={linea.id}
+                          className="flex flex-col gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium leading-snug">
+                              {linea.producto}
+                            </p>
+                            <p className="mt-0.5 text-xs text-muted">
+                              {dinero(linea.precioUnitario)}
+                              {linea.codigo ? (
+                                <span className="font-mono">
+                                  {" "}
+                                  · {linea.codigo}
+                                </span>
+                              ) : null}
+                              {linea.notas ? (
+                                <span> · {linea.notas}</span>
+                              ) : null}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                            {editable ? (
+                              <div
+                                className="flex items-center gap-1"
+                                role="group"
+                                aria-label={`Cantidad de ${linea.producto}`}
+                              >
+                                <button
+                                  type="button"
+                                  disabled={enviando}
+                                  onClick={() =>
+                                    void cambiarCantidadLinea(
+                                      linea.id,
+                                      linea.cantidad - 1,
+                                    )
+                                  }
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-background text-base font-medium disabled:opacity-50"
+                                  aria-label="Menos uno"
+                                >
+                                  −
+                                </button>
+                                <span className="min-w-[2.5rem] text-center font-semibold tabular-nums">
+                                  {textoCantidad(linea.cantidad)}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={enviando}
+                                  onClick={() =>
+                                    void cambiarCantidadLinea(
+                                      linea.id,
+                                      linea.cantidad + 1,
+                                    )
+                                  }
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-background text-base font-medium disabled:opacity-50"
+                                  aria-label="Más uno"
+                                >
+                                  +
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={enviando}
+                                  onClick={() => void quitarLinea(linea.id)}
+                                  className="ml-1 rounded-lg px-2 py-1 text-xs font-medium text-warn hover:bg-warn-soft"
+                                >
+                                  Quitar
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted">
+                                {textoCantidad(linea.cantidad)} ×
+                              </span>
+                            )}
+                            <span className="shrink-0 font-semibold tabular-nums">
+                              {dinero(linea.subtotal)}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="mt-2 rounded-xl border border-dashed border-line bg-background px-4 py-6 text-center text-sm text-muted">

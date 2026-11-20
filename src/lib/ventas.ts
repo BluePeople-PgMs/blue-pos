@@ -406,20 +406,69 @@ export async function agregarLinea(datos: {
     return { error: mensajeLegible(lineaError.message) };
   }
 
-  const nuevoTotal =
-    detalle.venta.lineasDetalle.reduce((suma, l) => suma + l.subtotal, 0) +
-    datos.cantidad * precio;
+  return sincronizarTotalVenta(supabase, datos.ventaId);
+}
 
-  const { error: totalError } = await supabase
-    .from("ventas")
-    .update({ total: nuevoTotal })
-    .eq("id", datos.ventaId);
+export async function actualizarCantidadLinea(datos: {
+  ventaId: string;
+  lineaId: string;
+  cantidad: number;
+}) {
+  const { supabase, error: sesionError } = await exigirSesion();
+  if (!supabase) return { error: sesionError };
+  if (sesionError) return { error: sesionError };
 
-  if (totalError) {
-    return { error: mensajeLegible(totalError.message) };
+  const bloqueo = await asegurarVentaAbierta(supabase, datos.ventaId);
+  if (bloqueo.error) return bloqueo;
+
+  if (!(datos.cantidad > 0)) {
+    return eliminarLineaVenta({
+      ventaId: datos.ventaId,
+      lineaId: datos.lineaId,
+    });
   }
 
-  return { error: null };
+  const { data: linea, error: leerError } = await supabase
+    .from("venta_lineas")
+    .select("id, venta_id")
+    .eq("id", datos.lineaId)
+    .maybeSingle();
+
+  if (leerError) return { error: mensajeLegible(leerError.message) };
+  if (!linea || linea.venta_id !== datos.ventaId) {
+    return { error: "Esa línea no pertenece a la venta." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("venta_lineas")
+    .update({ cantidad: datos.cantidad })
+    .eq("id", datos.lineaId);
+
+  if (updateError) return { error: mensajeLegible(updateError.message) };
+
+  return sincronizarTotalVenta(supabase, datos.ventaId);
+}
+
+export async function eliminarLineaVenta(datos: {
+  ventaId: string;
+  lineaId: string;
+}) {
+  const { supabase, error: sesionError } = await exigirSesion();
+  if (!supabase) return { error: sesionError };
+  if (sesionError) return { error: sesionError };
+
+  const bloqueo = await asegurarVentaAbierta(supabase, datos.ventaId);
+  if (bloqueo.error) return bloqueo;
+
+  const { error: deleteError } = await supabase
+    .from("venta_lineas")
+    .delete()
+    .eq("id", datos.lineaId)
+    .eq("venta_id", datos.ventaId);
+
+  if (deleteError) return { error: mensajeLegible(deleteError.message) };
+
+  return sincronizarTotalVenta(supabase, datos.ventaId);
 }
 
 export async function cobrarVenta(datos: {
@@ -726,6 +775,54 @@ export async function cancelarVentaCobrada(datos: {
     .eq("id", datos.ventaId);
   if (estadoError) return { error: mensajeLegible(estadoError.message) };
 
+  return { error: null };
+}
+
+async function asegurarVentaAbierta(
+  supabase: ReturnType<typeof getSupabaseBrowser>,
+  ventaId: string,
+): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Faltan las variables de Supabase." };
+
+  const { data, error } = await supabase
+    .from("ventas")
+    .select("estado")
+    .eq("id", ventaId)
+    .maybeSingle();
+
+  if (error) return { error: mensajeLegible(error.message) };
+  if (!data) return { error: "Venta no encontrada." };
+  if (data.estado !== "abierta") {
+    return { error: "Solo puedes editar una venta abierta." };
+  }
+  return { error: null };
+}
+
+async function sincronizarTotalVenta(
+  supabase: ReturnType<typeof getSupabaseBrowser>,
+  ventaId: string,
+): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Faltan las variables de Supabase." };
+
+  const { data: lineas, error: lineasError } = await supabase
+    .from("venta_lineas")
+    .select("cantidad, precio_unitario")
+    .eq("venta_id", ventaId);
+
+  if (lineasError) return { error: mensajeLegible(lineasError.message) };
+
+  const total = (lineas ?? []).reduce(
+    (suma, fila) =>
+      suma + Number(fila.cantidad) * Number(fila.precio_unitario),
+    0,
+  );
+
+  const { error: updateError } = await supabase
+    .from("ventas")
+    .update({ total })
+    .eq("id", ventaId);
+
+  if (updateError) return { error: mensajeLegible(updateError.message) };
   return { error: null };
 }
 

@@ -43,6 +43,7 @@ export const categorias: CategoriaSemilla[] = [
   { nombre: "Pizzas", orden: 80 },
   { nombre: "Postres", orden: 90 },
   { nombre: "Bebidas de la casa", orden: 100 },
+  { nombre: "Combos", orden: 105 },
   { nombre: "Pasta seca", orden: 110 },
   { nombre: "Salsas y conservas", orden: 120 },
   { nombre: "Quesos", orden: 130 },

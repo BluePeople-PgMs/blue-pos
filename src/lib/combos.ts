@@ -119,7 +119,9 @@ export async function listarCombos(): Promise<{
         .eq("tipo", "combo")
         .eq("activo", true)
         .order("nombre"),
-      supabase.from("combo_componentes").select("id, combo_id, producto_id, rol, cantidad"),
+      supabase
+        .from("combo_componentes")
+        .select("id, combo_id, producto_id, cantidad"),
       supabase.from("productos").select("id, nombre, codigo, precio, tipo, categoria_id"),
       supabase.from("categorias").select("id, nombre"),
     ]);
@@ -160,10 +162,12 @@ export async function listarCombos(): Promise<{
     if (!fila.combo_id || !fila.producto_id) continue;
     const producto = productosPorId.get(fila.producto_id);
     if (!producto) continue;
+    const rolGuardado =
+      "rol" in fila && typeof fila.rol === "string"
+        ? (fila.rol as RolCombo)
+        : null;
     const rol =
-      (fila.rol as RolCombo | null) ??
-      rolComboPorCategoria(producto.categoria) ??
-      "entrada";
+      rolGuardado ?? rolComboPorCategoria(producto.categoria) ?? "entrada";
     const lista = porCombo.get(fila.combo_id) ?? [];
     lista.push({
       rol,
@@ -290,16 +294,29 @@ export async function generarCombos(): Promise<{
       };
     }
 
-    const { error: componentesError } = await supabase
-      .from("combo_componentes")
-      .insert(
-        piezas.map((pieza) => ({
-          combo_id: comboFila.id,
-          producto_id: pieza.producto.id,
-          cantidad: 1,
-          rol: pieza.rol,
-        })),
-      );
+    const filasComponentes = piezas.map((pieza) => ({
+      combo_id: comboFila.id,
+      producto_id: pieza.producto.id,
+      cantidad: 1,
+    }));
+    const filasConRol = piezas.map((pieza) => ({
+      combo_id: comboFila.id,
+      producto_id: pieza.producto.id,
+      cantidad: 1,
+      rol: pieza.rol,
+    }));
+
+    let componentesError = (
+      await supabase.from("combo_componentes").insert(filasConRol)
+    ).error;
+    if (
+      componentesError &&
+      componentesError.message.toLowerCase().includes("rol")
+    ) {
+      componentesError = (
+        await supabase.from("combo_componentes").insert(filasComponentes)
+      ).error;
+    }
 
     if (componentesError) {
       return {
@@ -316,7 +333,7 @@ export async function generarCombos(): Promise<{
 
 function mensajeLegible(mensaje: string) {
   if (mensaje.includes("rol") && mensaje.includes("column")) {
-    return "Falta la migración combo_rol en Supabase. Aplica las migraciones del proyecto.";
+    return "Falta la columna rol en combo_componentes. En Supabase → SQL Editor ejecuta las migraciones 20261120120000_combo_rol.sql y 20261120195000_categoria_combos.sql del proyecto.";
   }
   if (mensaje.includes("<") || mensaje.length > 180) {
     return "No se pudo completar la operación. La base no respondió.";

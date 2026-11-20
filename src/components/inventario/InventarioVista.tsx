@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  fijarStockDemostracion,
   leerInventario,
   registrarEntrada,
   type CajaInventario,
@@ -52,13 +51,6 @@ export function InventarioVista() {
   const [cajaId, setCajaId] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<string | null>(null);
-  const [rellenando, setRellenando] = useState(false);
-
-  const sinStock =
-    puedeCapturar &&
-    !aviso &&
-    productos.length > 0 &&
-    productos.every((producto) => (producto.existencia ?? 0) === 0);
 
   async function cargar() {
     const datos = await leerInventario();
@@ -114,22 +106,6 @@ export function InventarioVista() {
 
   const seleccionado = productos.find((producto) => producto.id === productoId);
 
-  async function cargarStockDemostracion() {
-    setResultado(null);
-    setRellenando(true);
-    const respuesta = await fijarStockDemostracion();
-    setRellenando(false);
-    if (respuesta.error) {
-      setResultado(respuesta.error);
-      return;
-    }
-    setResultado(
-      `Stock de demostración cargado (${respuesta.filas ?? 0} productos).`,
-    );
-    setCargando(true);
-    await cargar();
-  }
-
   async function guardar(evento: React.FormEvent) {
     evento.preventDefault();
     setResultado(null);
@@ -182,29 +158,6 @@ export function InventarioVista() {
         >
           {aviso}
         </p>
-      ) : null}
-
-      {puedeCapturar ? (
-        <details className="rounded-2xl border border-dashed border-line bg-card px-5 py-4 text-sm">
-          <summary className="cursor-pointer font-medium text-muted">
-            Pruebas: rellenar inventario
-          </summary>
-          <p className="mt-3 leading-6 text-muted">
-            {sinStock
-              ? "No hay existencias cargadas. "
-              : "Sobrescribe las cantidades actuales con el stock de demostración "}
-            (62 insumos + 50 productos terminados). Solo para testing; no crea
-            movimientos de entrada.
-          </p>
-          <button
-            type="button"
-            disabled={rellenando}
-            onClick={cargarStockDemostracion}
-            className="mt-3 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {rellenando ? "Cargando…" : "Rellenar inventario de prueba"}
-          </button>
-        </details>
       ) : null}
 
       <form

@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { ProductoCatalogo } from "@/lib/catalogo";
+import { urlImagenCatalogo } from "@/lib/imagen-catalogo";
 
 function normalizar(valor: string) {
   return valor
@@ -120,18 +122,34 @@ export function CatalogoVista({
               {grupo.productos.map((producto) => (
                 <li
                   key={producto.id}
-                  className="flex items-start justify-between gap-4 rounded-2xl border border-line bg-card px-4 py-4"
+                  className="flex items-start gap-3 rounded-2xl border border-line bg-card p-3 sm:gap-4 sm:p-4"
                 >
-                  <div className="min-w-0">
-                    <h3 className="font-medium leading-6">{producto.nombre}</h3>
-                    <p className="mt-1 font-mono text-xs text-muted">
-                      {producto.codigo}
-                      {producto.unidad ? ` · ${producto.unidad}` : ""}
+                  <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-muted/30 sm:h-20 sm:w-20">
+                    <Image
+                      src={urlImagenCatalogo({
+                        codigo: producto.codigo,
+                        nombre: producto.nombre,
+                        categoria: producto.categoria,
+                      })}
+                      alt=""
+                      fill
+                      sizes="80px"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-medium leading-6">{producto.nombre}</h3>
+                      <p className="mt-1 font-mono text-xs text-muted">
+                        {producto.codigo}
+                        {producto.unidad ? ` · ${producto.unidad}` : ""}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold">
+                      {dinero(producto.precio)}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold">
-                    {dinero(producto.precio)}
-                  </p>
                 </li>
               ))}
             </ul>

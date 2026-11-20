@@ -119,7 +119,7 @@ async function main() {
     `Listo. ${recetas.length} recetas (${recetasNuevas} nuevas), ${lineasNuevas} líneas de insumo.`,
   );
   console.log(
-    "Existencias: inicia sesión en la app y pulsa «Cargar stock de demostración» en /inventario, o aplica la migración 20261120183000_existencias_iniciales_italiano.sql.",
+    "Existencias: aplica la migración 20261120183000_existencias_iniciales_italiano.sql o registra entradas en /inventario.",
   );
 }
 
