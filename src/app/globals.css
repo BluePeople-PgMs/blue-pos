@@ -1,17 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3efe6;
-  --foreground: #1b2430;
-  --card: #fffdf8;
-  --line: #e3d9c8;
-  --muted: #5e6874;
-  --accent: #0e6b62;
-  --accent-soft: #e5f4f1;
-  --warn: #8a4b12;
-  --warn-soft: #f8ecd9;
-  --danger: #8f2d2d;
-  --danger-soft: #f8e6e4;
+  /* Brand UX Latam–style: navy, coral, mint teal */
+  --brand-navy: #243b55;
+  --brand-navy-deep: #1a2d42;
+  --brand-coral: #e95d4a;
+  --brand-coral-hover: #d44a39;
+  --brand-teal: #b8e0e6;
+  --brand-teal-deep: #7eb8c4;
+
+  --background: #c5e8ec;
+  --foreground: #1a2d42;
+  --card: #ffffff;
+  --line: #d4e4e8;
+  --muted: #5a6b7a;
+  --accent: #e95d4a;
+  --accent-soft: #fde8e4;
+  --warn: #b45309;
+  --warn-soft: #fef3c7;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
 }
 
 @theme inline {
@@ -26,6 +34,9 @@
   --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-coral: var(--brand-coral);
+  --color-brand-teal: var(--brand-teal);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -34,4 +45,115 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Geometric hero background (login + app shell) */
+.brand-canvas {
+  position: relative;
+  min-height: 100%;
+  isolation: isolate;
+  background: linear-gradient(
+    160deg,
+    var(--brand-teal) 0%,
+    #d4eff2 45%,
+    #eef6f7 100%
+  );
+}
+
+.brand-canvas::before,
+.brand-canvas::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+  opacity: 0.95;
+}
+
+.brand-canvas::before {
+  top: -8%;
+  left: -15%;
+  width: 75%;
+  height: 55%;
+  background: var(--brand-navy);
+  transform: rotate(-12deg);
+  clip-path: polygon(0 0, 100% 0, 72% 100%, 0 85%);
+}
+
+.brand-canvas::after {
+  bottom: -5%;
+  right: -10%;
+  width: 70%;
+  height: 50%;
+  background: var(--brand-coral);
+  transform: rotate(-8deg);
+  clip-path: polygon(28% 0, 100% 15%, 100% 100%, 0 100%);
+}
+
+.brand-canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+.brand-login-shell {
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 0 100%);
+  background: linear-gradient(135deg, var(--brand-navy-deep), var(--brand-navy));
+}
+
+.brand-field-line {
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.5rem 0 0.65rem 2rem;
+  width: 100%;
+  outline: none;
+  font-size: 0.9375rem;
+  color: var(--foreground);
+}
+
+.brand-field-line::placeholder {
+  color: #9aa8b3;
+}
+
+.brand-field-line:focus {
+  border-bottom-color: var(--brand-coral);
+}
+
+.brand-btn-primary {
+  background: var(--brand-coral);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0.35rem;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.brand-btn-primary:hover:not(:disabled) {
+  background: var(--brand-coral-hover);
+}
+
+.brand-btn-primary:disabled {
+  opacity: 0.65;
+}
+
+.brand-card {
+  background: var(--card);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 20px 50px rgba(26, 45, 66, 0.18),
+    0 4px 12px rgba(26, 45, 66, 0.08);
+}
+
+.brand-nav {
+  background: linear-gradient(90deg, var(--brand-navy-deep), var(--brand-navy));
+  border-bottom: 3px solid var(--brand-coral);
+  color: #fff;
+}
+
+.brand-nav a {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.brand-nav a:hover {
+  color: #fff;
+  text-decoration: underline;
 }

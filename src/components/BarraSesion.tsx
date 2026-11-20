@@ -56,34 +56,28 @@ export function BarraSesion() {
   }
 
   return (
-    <header className="border-b border-line bg-card">
+    <header className="brand-nav">
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-3">
-        <Link href="/" className="text-sm font-semibold text-foreground">
+        <Link href="/" className="text-sm font-semibold text-white">
           Blue POS 2.0
         </Link>
 
         <nav className="flex flex-wrap items-center gap-3 text-sm">
-          <Link
-            href="/catalogos"
-            className="font-medium text-accent hover:underline"
-          >
+          <Link href="/catalogos" className="font-medium">
             Catálogos
           </Link>
-          <Link
-            href="/inventario"
-            className="font-medium text-accent hover:underline"
-          >
+          <Link href="/combos" className="font-medium">
+            Combos
+          </Link>
+          <Link href="/inventario" className="font-medium">
             Inventario
           </Link>
-          <Link
-            href="/ventas"
-            className="font-medium text-accent hover:underline"
-          >
+          <Link href="/ventas" className="font-medium">
             Ventas
           </Link>
-          <span className="text-muted">
+          <span className="text-white/75">
             Sesión:{" "}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-white">
               {session.user.email ?? session.user.id}
             </span>
           </span>
@@ -91,7 +85,7 @@ export function BarraSesion() {
             type="button"
             onClick={cerrarSesion}
             disabled={cerrando}
-            className="rounded-lg border border-line px-3 py-1.5 font-medium text-foreground transition-colors hover:bg-background disabled:opacity-60"
+            className="rounded-md bg-brand-coral px-3 py-1.5 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {cerrando ? "Saliendo…" : "Cerrar sesión"}
           </button>
