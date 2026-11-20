@@ -8,26 +8,36 @@ const slides = [
     src: "/combos/carrusel-resumen.svg",
     titulo: "Guía de descuentos",
     subtitulo: "Productos en el combo × porcentaje de ahorro",
+    alt: "",
+    contain: false,
   },
   {
     src: "/combos/carrusel-1-producto.svg",
     titulo: "1 producto",
     subtitulo: "0% — agrega al menos 2 productos para 10%",
+    alt: "",
+    contain: false,
   },
   {
-    src: "/combos/carrusel-2-productos.svg",
+    src: "/combos/descuento-10.png",
     titulo: "2 productos",
     subtitulo: "10% de descuento",
+    alt: "Promoción: 10% off en combo de 2 productos",
+    contain: true,
   },
   {
-    src: "/combos/carrusel-3-4-productos.svg",
+    src: "/combos/descuento-20.png",
     titulo: "3–4 productos",
     subtitulo: "20% de descuento",
+    alt: "Promoción: 20% off en combo de 3 a 4 productos",
+    contain: true,
   },
   {
-    src: "/combos/carrusel-5-productos.svg",
+    src: "/combos/descuento-30.png",
     titulo: "5 o más productos",
     subtitulo: "30% de descuento",
+    alt: "Promoción: 30% off en combo de 5 o más productos",
+    contain: true,
   },
 ] as const;
 
@@ -73,9 +83,13 @@ export function ComboDescuentoCarrusel() {
             >
               <Image
                 src={slide.src}
-                alt=""
+                alt={slide.alt}
                 fill
-                className="object-cover"
+                className={
+                  slide.contain
+                    ? "object-contain p-4"
+                    : "object-cover"
+                }
                 priority={i === 0}
                 sizes="(max-width: 896px) 100vw, 896px"
               />
