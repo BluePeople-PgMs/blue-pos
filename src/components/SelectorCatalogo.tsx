@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMontado } from "@/lib/useMontado";
 
 const opciones = [
   { href: "/catalogos/comidas", label: "Comidas preparadas" },
@@ -10,11 +11,12 @@ const opciones = [
 
 export function SelectorCatalogo() {
   const ruta = usePathname();
+  const montado = useMontado();
 
   return (
     <nav className="flex flex-wrap gap-2" aria-label="Catálogos">
       {opciones.map((opcion) => {
-        const activo = ruta === opcion.href;
+        const activo = montado && ruta === opcion.href;
         return (
           <Link
             key={opcion.href}

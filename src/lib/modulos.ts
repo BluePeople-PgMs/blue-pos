@@ -70,4 +70,12 @@ export const modulos: Modulo[] = [
     estado: "listo",
     enlaces: [{ href: "/cancelaciones", etiqueta: "Historial" }],
   },
+  {
+    nombre: "Reportes",
+    resumen:
+      "Por periodo: ventas, inventario, cancelaciones, combos y platillos más vendidos.",
+    tablas: ["ventas", "movimientos_inventario", "cancelaciones", "venta_lineas"],
+    estado: "listo",
+    enlaces: [{ href: "/reportes", etiqueta: "Ver reportes" }],
+  },
 ];

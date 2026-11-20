@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { menuModulos } from "@/lib/navegacion";
+import { useMontado } from "@/lib/useMontado";
 
 export function MenuModulos() {
   const pathname = usePathname();
+  const montado = useMontado();
 
   return (
     <nav
@@ -15,7 +17,8 @@ export function MenuModulos() {
       <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 py-2">
         {menuModulos.map((item) => {
           const activo =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+            montado &&
+            (pathname === item.href || pathname.startsWith(`${item.href}/`));
           return (
             <Link
               key={item.href}

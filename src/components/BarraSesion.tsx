@@ -12,17 +12,19 @@ import {
   leerSesionLocal,
 } from "@/lib/sesionLocal";
 import { getSupabaseBrowser } from "@/lib/supabase";
+import { useMontado } from "@/lib/useMontado";
 
 export function BarraSesion() {
   const router = useRouter();
+  const montado = useMontado();
   const [usuario, setUsuario] = useState<User | null>(null);
-  const [sesionLocal, setSesionLocal] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : (leerSesionLocal()?.email ?? null),
-  );
+  const [sesionLocal, setSesionLocal] = useState<string | null>(null);
+
   useEffect(() => {
     const actualizarLocal = () => {
       setSesionLocal(leerSesionLocal()?.email ?? null);
     };
+    actualizarLocal();
     window.addEventListener(EVENTO_SESION, actualizarLocal);
 
     const supabase = getSupabaseBrowser();
@@ -46,7 +48,8 @@ export function BarraSesion() {
     };
   }, []);
 
-  const sesionActiva = Boolean(usuario || sesionLocal);
+  const sesionActiva =
+    montado && Boolean(usuario || sesionLocal);
   const etiquetaSesion = usuario?.email ?? usuario?.id ?? sesionLocal ?? "";
 
   async function cerrarSesion() {

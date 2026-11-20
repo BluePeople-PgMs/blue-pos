@@ -59,4 +59,16 @@ export const menuModulos: ItemMenu[] = [
     tablas: ["cancelaciones"],
     requiereSesion: true,
   },
+  {
+    nombre: "Reportes",
+    href: "/reportes",
+    resumen: "Ventas, inventario, cancelaciones, combos y recetas por fechas.",
+    tablas: [
+      "ventas",
+      "movimientos_inventario",
+      "cancelaciones",
+      "venta_lineas",
+    ],
+    requiereSesion: true,
+  },
 ];
