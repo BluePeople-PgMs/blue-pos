@@ -141,6 +141,14 @@ export function PuntoVenta({ session }: { session: Session }) {
   const [error, setError] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
+  const [cancelarModal, setCancelarModal] = useState<{
+    ventaId: string;
+    folio: string | null;
+    total: number;
+    paso: 1 | 2;
+  } | null>(null);
+  const [motivoCancelacion, setMotivoCancelacion] = useState("");
+
   const cargarVentaAbierta = useCallback(
     async (ventaId: string) => {
       const { data: ventaData, error: ventaError } = await supabase
@@ -544,15 +552,25 @@ export function PuntoVenta({ session }: { session: Session }) {
     await recargarBase(true);
   }
 
-  async function cancelarVenta(ventaId: string) {
+  function abrirModalCancelar(venta: VentaCobrada) {
+    setMotivoCancelacion("");
+    setCancelarModal({
+      ventaId: venta.id,
+      folio: venta.folio,
+      total: venta.total,
+      paso: 1,
+    });
+  }
+
+  function cerrarModalCancelar() {
+    setCancelarModal(null);
+    setMotivoCancelacion("");
+  }
+
+  async function cancelarVenta(ventaId: string, motivo: string | null) {
     setMensaje(null);
     setError(null);
-
-    const motivoRespuesta = window.prompt("Motivo de la cancelación (opcional)");
-    if (motivoRespuesta === null) {
-      return;
-    }
-    const motivo = motivoRespuesta.trim() || null;
+    cerrarModalCancelar();
 
     setProcesando(true);
 
@@ -911,7 +929,7 @@ export function PuntoVenta({ session }: { session: Session }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => void cancelarVenta(v.id)}
+                  onClick={() => abrirModalCancelar(v)}
                   disabled={procesando}
                   className="rounded-lg border border-danger/40 px-3 py-2 text-sm font-medium text-danger disabled:opacity-60"
                 >
@@ -922,6 +940,111 @@ export function PuntoVenta({ session }: { session: Session }) {
           </ul>
         )}
       </section>
+
+      {cancelarModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-navy-deep/50 p-4"
+          role="presentation"
+          onClick={cerrarModalCancelar}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancelar-pedido-titulo"
+            className="brand-surface w-full max-w-md rounded-2xl p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {cancelarModal.paso === 1 ? (
+              <>
+                <h2
+                  id="cancelar-pedido-titulo"
+                  className="text-lg font-semibold text-foreground"
+                >
+                  ¿Seguro que deseas cancelar tu pedido?
+                </h2>
+                <p className="mt-2 text-sm text-muted">
+                  Pedido{" "}
+                  <span className="font-medium text-foreground">
+                    {cancelarModal.folio ?? cancelarModal.ventaId.slice(0, 8)}
+                  </span>{" "}
+                  · {formatoMoneda(cancelarModal.total)}
+                </p>
+                <p className="mt-3 text-sm text-muted">
+                  Se devolverá el inventario y la venta quedará como cancelada.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={cerrarModalCancelar}
+                    className="rounded-lg border border-line px-4 py-2 text-sm font-medium"
+                  >
+                    No, volver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCancelarModal((prev) =>
+                        prev ? { ...prev, paso: 2 } : prev,
+                      )
+                    }
+                    className="rounded-lg bg-brand-coral px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Sí, continuar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2
+                  id="cancelar-pedido-titulo"
+                  className="text-lg font-semibold text-foreground"
+                >
+                  Confirmar cancelación
+                </h2>
+                <p className="mt-2 text-sm text-muted">
+                  Última confirmación. Esta acción no se puede deshacer.
+                </p>
+                <label className="mt-4 flex flex-col gap-1.5 text-sm">
+                  <span className="font-medium">Motivo (opcional)</span>
+                  <textarea
+                    value={motivoCancelacion}
+                    onChange={(e) => setMotivoCancelacion(e.target.value)}
+                    rows={3}
+                    className="rounded-lg border border-line bg-background px-3 py-2 text-sm"
+                    placeholder="Ej. error en el ticket, cliente desistió…"
+                  />
+                </label>
+                <div className="mt-6 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCancelarModal((prev) =>
+                        prev ? { ...prev, paso: 1 } : prev,
+                      )
+                    }
+                    className="rounded-lg border border-line px-4 py-2 text-sm font-medium"
+                  >
+                    Volver
+                  </button>
+                  <button
+                    type="button"
+                    disabled={procesando}
+                    onClick={() =>
+                      void cancelarVenta(
+                        cancelarModal.ventaId,
+                        motivoCancelacion.trim() || null,
+                      )
+                    }
+                    className="rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {procesando ? "Cancelando…" : "Confirmar cancelación"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
