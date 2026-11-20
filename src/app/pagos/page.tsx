@@ -20,11 +20,11 @@ export default function PagosPage() {
             </Link>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Cobros registrados
+            Cobro e historial
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted">
-            Cada venta cobrada genera un pago ligado al folio. Aquí solo
-            consultas; para cobrar usa Ventas.
+            Cobre ventas abiertas con efectivo, tarjeta o transferencia. Abajo
+            verás los pagos ya registrados ligados al folio.
           </p>
         </header>
         <PagosVista />

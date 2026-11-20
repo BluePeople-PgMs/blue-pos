@@ -23,10 +23,10 @@ export default function VentasPage() {
             Cobro de ticket
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted">
-            Arma una venta abierta con productos del catálogo. Al cobrar, el
+            Arma una venta abierta con productos del catálogo. Usa el filtro
+            (Todas, Abiertas, Pagadas, Canceladas) sobre la lista. Al cobrar, el
             estado pasa a cobrada, se guarda el pago y el inventario sale con
-            salida_venta. Solo una venta cobrada se puede cancelar para
-            devolver existencia.
+            salida_venta.
           </p>
         </header>
         <VentasVista />

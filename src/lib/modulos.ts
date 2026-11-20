@@ -57,10 +57,11 @@ export const modulos: Modulo[] = [
   },
   {
     nombre: "Pagos",
-    resumen: "Consulta de cobros ligados al folio de venta.",
+    resumen:
+      "Cobra ventas abiertas y consulta el historial de pagos por folio.",
     tablas: ["pagos"],
     estado: "listo",
-    enlaces: [{ href: "/pagos", etiqueta: "Historial de pagos" }],
+    enlaces: [{ href: "/pagos", etiqueta: "Cobrar y consultar" }],
   },
   {
     nombre: "Cancelaciones",

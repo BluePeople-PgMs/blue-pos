@@ -1,4 +1,20 @@
+import {
+  cobrarVenta,
+  leerVenta,
+  listarVentas,
+  type MetodoPago,
+  type VentaDetalle,
+  type VentaLista,
+} from "@/lib/ventas";
 import { getSupabaseBrowser } from "@/lib/supabase";
+
+export type { MetodoPago };
+
+export const ETIQUETAS_METODO: Record<MetodoPago, string> = {
+  efectivo: "Efectivo",
+  tarjeta: "Tarjeta",
+  transferencia: "Transferencia",
+};
 
 export type PagoLista = {
   id: string;
@@ -71,4 +87,40 @@ function mensajeLegible(mensaje: string) {
     return "No se pudieron leer los pagos. La base no respondió.";
   }
   return mensaje;
+}
+
+/** Ventas abiertas con líneas; pendientes de cobro en este módulo. */
+export async function listarVentasPendientesDePago() {
+  const { error, ventas } = await listarVentas();
+  if (error) {
+    return { error, ventas: [] as VentaLista[] };
+  }
+  const pendientes = ventas.filter(
+    (v) => v.estado === "abierta" && v.lineas > 0 && v.total > 0,
+  );
+  return { error: null, ventas: pendientes };
+}
+
+export async function leerVentaParaPago(ventaId: string) {
+  const { error, venta } = await leerVenta(ventaId);
+  if (error || !venta) {
+    return { error: error ?? "Venta no encontrada.", venta: null };
+  }
+  if (venta.estado !== "abierta") {
+    return {
+      error: "Esta venta ya no está pendiente de pago.",
+      venta: null as VentaDetalle | null,
+    };
+  }
+  if (venta.lineasDetalle.length === 0) {
+    return { error: "La venta no tiene líneas.", venta: null };
+  }
+  return { error: null, venta };
+}
+
+export async function registrarPago(datos: {
+  ventaId: string;
+  metodo: MetodoPago;
+}) {
+  return cobrarVenta(datos);
 }

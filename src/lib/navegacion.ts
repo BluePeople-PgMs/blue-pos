@@ -48,7 +48,7 @@ export const menuModulos: ItemMenu[] = [
   {
     nombre: "Pagos",
     href: "/pagos",
-    resumen: "Pagos ligados a ventas cobradas.",
+    resumen: "Cobra ventas abiertas y consulta historial de pagos.",
     tablas: ["pagos"],
     requiereSesion: true,
   },

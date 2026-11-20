@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   agregarLinea,
   cancelarVentaAbierta,
@@ -33,9 +33,18 @@ function textoCantidad(valor: number) {
   );
 }
 
+type FiltroVentas = "todas" | VentaLista["estado"];
+
+const OPCIONES_FILTRO: { valor: FiltroVentas; etiqueta: string }[] = [
+  { valor: "todas", etiqueta: "Todas" },
+  { valor: "abierta", etiqueta: "Abiertas" },
+  { valor: "cobrada", etiqueta: "Pagadas" },
+  { valor: "cancelada", etiqueta: "Canceladas" },
+];
+
 function etiquetaEstado(estado: VentaLista["estado"]) {
   if (estado === "abierta") return "Abierta";
-  if (estado === "cobrada") return "Cobrada";
+  if (estado === "cobrada") return "Pagada";
   return "Cancelada";
 }
 
@@ -58,6 +67,48 @@ function textoResumenExistencia(
     .join(" · ");
 }
 
+function BarraFiltroVentas({
+  filtro,
+  onFiltro,
+  deshabilitado,
+}: {
+  filtro: FiltroVentas;
+  onFiltro: (f: FiltroVentas) => void;
+  deshabilitado?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-semibold text-foreground">Filtrar por estado</p>
+      <div
+        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+        role="tablist"
+        aria-label="Filtrar ventas por estado"
+      >
+        {OPCIONES_FILTRO.map((op) => {
+          const activo = filtro === op.valor;
+          return (
+            <button
+              key={op.valor}
+              type="button"
+              role="tab"
+              aria-selected={activo}
+              disabled={deshabilitado}
+              onClick={() => onFiltro(op.valor)}
+              className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                activo
+                  ? "border-accent bg-accent text-white"
+                  : "border-line bg-card text-foreground hover:border-accent/40"
+              }`}
+            >
+              {op.etiqueta}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function VentasVista() {
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -74,6 +125,12 @@ export function VentasVista() {
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [enlaceInventario, setEnlaceInventario] = useState(false);
+  const [filtro, setFiltro] = useState<FiltroVentas>("todas");
+
+  const ventasFiltradas = useMemo(() => {
+    if (filtro === "todas") return ventas;
+    return ventas.filter((v) => v.estado === filtro);
+  }, [ventas, filtro]);
 
   const recargar = useCallback(async () => {
     const [catalogo, lista] = await Promise.all([
@@ -240,19 +297,16 @@ export function VentasVista() {
     );
   }
 
-  if (cargando) {
-    return (
-      <p
-        role="status"
-        className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"
-      >
-        Cargando ventas…
-      </p>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-8">
+      <section className="rounded-2xl border-2 border-accent/25 bg-card px-5 py-4 shadow-sm">
+        <BarraFiltroVentas
+          filtro={filtro}
+          onFiltro={setFiltro}
+          deshabilitado={cargando}
+        />
+      </section>
+
       {aviso ? (
         <p
           role="status"
@@ -274,11 +328,20 @@ export function VentasVista() {
             Nueva venta abierta
           </button>
         </div>
-        {ventas.length === 0 ? (
+
+        {cargando ? (
+          <p className="text-sm text-muted" role="status">
+            Cargando ventas…
+          </p>
+        ) : ventas.length === 0 ? (
           <p className="text-sm text-muted">Todavía no hay ventas.</p>
+        ) : ventasFiltradas.length === 0 ? (
+          <p className="text-sm text-muted">
+            No hay ventas con este filtro. Prueba otra pestaña.
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {ventas.map((v) => {
+            {ventasFiltradas.map((v) => {
               const activa = v.id === ventaId;
               return (
                 <li key={v.id}>
