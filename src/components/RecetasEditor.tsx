@@ -17,7 +17,7 @@ import {
   type RecetaInsumo,
 } from "@/lib/recetas";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function RecetasEditor() {
   const [preparados, setPreparados] = useState<ProductoResumen[]>([]);
@@ -34,8 +34,6 @@ export function RecetasEditor() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const cargaInicialHecha = useRef(false);
 
   const preparadoSeleccionado = preparados.find((p) => p.id === productoId);
 
@@ -118,8 +116,6 @@ export function RecetasEditor() {
   );
 
   useEffect(() => {
-    if (cargaInicialHecha.current) return;
-    cargaInicialHecha.current = true;
     let activo = true;
 
     void (async () => {
@@ -143,7 +139,9 @@ export function RecetasEditor() {
     return () => {
       activo = false;
     };
-  }, [cargarDetalle]);
+    // La carga inicial no debe repetirse cuando cambia el detalle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function onPreparadoChange(nextId: string) {
     setProductoId(nextId);

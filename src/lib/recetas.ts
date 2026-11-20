@@ -2,7 +2,6 @@ import {
   listarInsumosCatalogo,
   listarPreparadosCatalogo,
   mensajeErrorCatalogo,
-  productoRelacionado,
   TIPO_PRODUCTO_INSUMO,
   TIPO_PRODUCTO_PREPARADO,
   type CatalogoError,
@@ -232,9 +231,7 @@ export async function listarInsumos(recetaId: string): Promise<{
 
   const { data, error } = await supabase
     .from("receta_insumos")
-    .select(
-      "id, insumo_id, cantidad, productos!receta_insumos_insumo_id_fkey(nombre, codigo, tipo)",
-    )
+    .select("id, insumo_id, cantidad")
     .eq("receta_id", recetaId)
     .order("id");
 
@@ -242,21 +239,37 @@ export async function listarInsumos(recetaId: string): Promise<{
     return { data: null, error: { kind: "supabase", message: error.message } };
   }
 
-  const filas: RecetaInsumo[] = (data ?? []).map((row) => {
-    const producto = productoRelacionado(row.productos);
-    return {
-      id: row.id,
-      insumo_id: row.insumo_id,
-      cantidad: Number(row.cantidad),
-      productos: producto
-        ? {
-            nombre: producto.nombre as string,
-            codigo: producto.codigo as string | null,
-            tipo: producto.tipo as string,
-          }
-        : null,
-    };
-  });
+  const ids = [...new Set((data ?? []).map((row) => row.insumo_id).filter(Boolean))];
+  const productos = new Map<
+    string,
+    { nombre: string; codigo: string | null; tipo: string }
+  >();
+
+  if (ids.length > 0) {
+    const { data: catalogo, error: catalogoError } = await supabase
+      .from("productos")
+      .select("id, nombre, codigo, tipo")
+      .in("id", ids);
+
+    if (catalogoError) {
+      return { data: null, error: { kind: "supabase", message: catalogoError.message } };
+    }
+
+    for (const producto of catalogo ?? []) {
+      productos.set(producto.id, {
+        nombre: producto.nombre,
+        codigo: producto.codigo,
+        tipo: producto.tipo,
+      });
+    }
+  }
+
+  const filas: RecetaInsumo[] = (data ?? []).map((row) => ({
+    id: row.id,
+    insumo_id: row.insumo_id,
+    cantidad: Number(row.cantidad),
+    productos: productos.get(row.insumo_id) ?? null,
+  }));
 
   return { data: filas, error: null };
 }

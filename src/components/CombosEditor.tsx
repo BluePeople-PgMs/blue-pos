@@ -21,7 +21,7 @@ import {
 } from "@/lib/combos";
 import { etiquetaTipoProducto } from "@/lib/catalogo/productos";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function CombosEditor() {
   const [combos, setCombos] = useState<ProductoResumen[]>([]);
@@ -38,8 +38,6 @@ export function CombosEditor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [precioCombo, setPrecioCombo] = useState<number | null>(null);
-
-  const cargaInicialHecha = useRef(false);
 
   const cargarDetalle = useCallback(async (selectedComboId: string) => {
     if (!selectedComboId) {
@@ -82,8 +80,6 @@ export function CombosEditor() {
   }, []);
 
   useEffect(() => {
-    if (cargaInicialHecha.current) return;
-    cargaInicialHecha.current = true;
     let activo = true;
 
     void (async () => {
@@ -106,7 +102,9 @@ export function CombosEditor() {
     return () => {
       activo = false;
     };
-  }, [cargarDetalle]);
+    // La carga inicial no debe repetirse cuando cambia el detalle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function onComboChange(nextId: string) {
     setComboId(nextId);

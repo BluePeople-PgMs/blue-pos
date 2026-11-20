@@ -2,7 +2,6 @@ import {
   listarCombosCatalogo,
   listarComponentesDisponiblesCatalogo,
   mensajeErrorCatalogo,
-  productoRelacionado,
   type CatalogoError,
   type ProductoCatalogoResumen,
 } from "@/lib/catalogo/productos";
@@ -59,9 +58,7 @@ export async function listarComponentes(comboId: string): Promise<{
 
   const { data, error } = await supabase
     .from("combo_componentes")
-    .select(
-      "id, producto_id, cantidad, productos!combo_componentes_producto_id_fkey(nombre, codigo, precio, tipo)",
-    )
+    .select("id, producto_id, cantidad")
     .eq("combo_id", comboId)
     .order("id");
 
@@ -69,23 +66,38 @@ export async function listarComponentes(comboId: string): Promise<{
     return { data: null, error: { kind: "supabase", message: error.message } };
   }
 
-  const filas: ComboComponente[] = (data ?? []).map((row) => {
-    const producto = productoRelacionado(row.productos);
-    return {
-      id: row.id,
-      producto_id: row.producto_id,
-      cantidad: Number(row.cantidad),
-      productos: producto
-        ? {
-            nombre: producto.nombre as string,
-            codigo: producto.codigo as string | null,
-            precio:
-              producto.precio == null ? null : Number(producto.precio),
-            tipo: producto.tipo as string,
-          }
-        : null,
-    };
-  });
+  const ids = [...new Set((data ?? []).map((row) => row.producto_id).filter(Boolean))];
+  const productos = new Map<
+    string,
+    { nombre: string; codigo: string | null; precio: number | null; tipo: string }
+  >();
+
+  if (ids.length > 0) {
+    const { data: catalogo, error: catalogoError } = await supabase
+      .from("productos")
+      .select("id, nombre, codigo, precio, tipo")
+      .in("id", ids);
+
+    if (catalogoError) {
+      return { data: null, error: { kind: "supabase", message: catalogoError.message } };
+    }
+
+    for (const producto of catalogo ?? []) {
+      productos.set(producto.id, {
+        nombre: producto.nombre,
+        codigo: producto.codigo,
+        precio: producto.precio == null ? null : Number(producto.precio),
+        tipo: producto.tipo,
+      });
+    }
+  }
+
+  const filas: ComboComponente[] = (data ?? []).map((row) => ({
+    id: row.id,
+    producto_id: row.producto_id,
+    cantidad: Number(row.cantidad),
+    productos: productos.get(row.producto_id) ?? null,
+  }));
 
   return { data: filas, error: null };
 }
