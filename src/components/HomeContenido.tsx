@@ -82,10 +82,7 @@ export function HomeContenido() {
         <h2 className="text-xl font-semibold">Módulos</h2>
         <ul className="grid gap-4 sm:grid-cols-2">
           {lista.map((modulo) => (
-            <li
-              key={modulo.nombre}
-              className="rounded-2xl border border-line bg-card px-5 py-5"
-            >
+            <li key={modulo.nombre} className="cine-panel px-5 py-5">
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-lg font-semibold">{modulo.nombre}</h3>
                 <span
@@ -101,7 +98,7 @@ export function HomeContenido() {
                 <div className="mt-3">
                   <Link
                     href={modulo.ruta}
-                    className="inline-flex rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
+                    className="cine-btn-primary inline-flex px-4 py-2 text-sm"
                   >
                     {etiquetaModulo(modulo)}
                   </Link>

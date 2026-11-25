@@ -52,15 +52,12 @@ export default function CatalogosHubPage() {
 
       <ul className="grid gap-4 sm:grid-cols-2">
         {SECCIONES.map((seccion) => (
-          <li
-            key={seccion.href}
-            className="rounded-2xl border border-line bg-card px-5 py-5"
-          >
+          <li key={seccion.href} className="cine-panel px-5 py-5">
             <h2 className="text-lg font-semibold">{seccion.titulo}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{seccion.detalle}</p>
             <Link
               href={seccion.href}
-              className="mt-4 inline-block rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white"
+              className="cine-btn-primary mt-4 inline-block px-4 py-2 text-sm"
             >
               Abrir
             </Link>

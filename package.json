@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:recetas-schema": "bash scripts/verify-recetas-schema.sh",
-    "generate:portadas-venta": "node scripts/generate-combo-portadas.mjs --from-supabase",
+    "generate:portadas-venta": "npx --yes tsx scripts/generate-portadas-venta.ts",
     "generate:combo-portadas": "node scripts/generate-combo-portadas.mjs --from-supabase"
   },
   "dependencies": {

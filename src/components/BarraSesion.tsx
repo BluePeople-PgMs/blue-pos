@@ -5,10 +5,11 @@ import { etiquetaRol, ROL_MESERO, rutaInicioPorRol } from "@/lib/roles";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function BarraSesion() {
+  const pathname = usePathname();
   const router = useRouter();
   const supabase = getSupabaseBrowser();
   const { rol } = usePerfilRol();
@@ -59,10 +60,15 @@ export function BarraSesion() {
   }
 
   const inicio = rutaInicioPorRol(rol);
+  const enPedidos = pathname === "/pedidos";
 
   return (
-    <header className="brand-nav">
-      <div className="mx-auto flex w-full max-w-[72rem] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <header className={`brand-nav ${enPedidos ? "brand-nav--compact" : ""}`}>
+      <div
+        className={`mx-auto flex w-full flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
+          enPedidos ? "max-w-none" : "max-w-[72rem]"
+        }`}
+      >
         <div className="flex min-w-0 items-center justify-between gap-3">
           <Link href={inicio} className="shrink-0 text-base font-semibold text-white">
             Blue POS 2.0

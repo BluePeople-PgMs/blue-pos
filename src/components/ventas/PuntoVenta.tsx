@@ -1,8 +1,19 @@
 "use client";
 
-import { MenuConcesionVenta } from "@/components/ventas/MenuConcesionVenta";
+import { CatalogoVentaCinepolis } from "@/components/pos/CatalogoVentaCinepolis";
+import { PosLayout } from "@/components/pos/PosLayout";
+import { PosOperacionHeader } from "@/components/pos/PosOperacionHeader";
+import { TicketResumenVivo } from "@/components/pos/TicketResumenVivo";
+import { VentasRecientesPanel } from "@/components/pos/VentasRecientesPanel";
 import { TIPO_PRODUCTO_COMBO } from "@/lib/catalogo/productos";
-import { armarMenuVentaVisual } from "@/lib/ventas/catalogoVentaVisual";
+import {
+  armarMenuVentaVisual,
+  esIdComboEnCatalogo,
+} from "@/lib/ventas/catalogoVentaVisual";
+import {
+  filtrarArticulosMenu,
+  type FiltroCatalogoTab,
+} from "@/lib/ventas/filtrosMenuCliente";
 import {
   armarCombosParaVenta,
   esProductoCombo,
@@ -14,7 +25,6 @@ import {
 } from "@/lib/ventas/combosEnVenta";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Producto = ProductoVentaResumen;
@@ -169,6 +179,8 @@ export function PuntoVenta({ session }: { session: Session }) {
     paso: 1 | 2;
   } | null>(null);
   const [motivoCancelacion, setMotivoCancelacion] = useState("");
+  const [filtroQuery, setFiltroQuery] = useState("");
+  const [filtroTab, setFiltroTab] = useState<FiltroCatalogoTab>("todos");
 
   const cargarVentaAbierta = useCallback(
     async (ventaId: string) => {
@@ -321,6 +333,29 @@ export function PuntoVenta({ session }: { session: Session }) {
     () => armarMenuVentaVisual(productos, combosVenta, existencias),
     [productos, combosVenta, existencias],
   );
+  const articulosFiltrados = useMemo(
+    () => filtrarArticulosMenu(articulosMenu, { query: filtroQuery, tab: filtroTab }),
+    [articulosMenu, filtroQuery, filtroTab],
+  );
+  const lineasTicket = useMemo(
+    () =>
+      lineas.map((linea) => {
+        const producto = linea.producto_id
+          ? catalogoPorId.get(linea.producto_id)
+          : null;
+        return {
+          id: linea.id,
+          producto_id: linea.producto_id,
+          cantidad: linea.cantidad,
+          precio_unitario: linea.precio_unitario,
+          notas: linea.notas,
+          etiqueta: producto
+            ? etiquetaProducto(producto.nombre, producto.codigo)
+            : "—",
+        };
+      }),
+    [lineas, catalogoPorId],
+  );
 
   async function sincronizarTotal(ventaId: string) {
     const { data, error: lineasError } = await supabase
@@ -445,6 +480,18 @@ export function PuntoVenta({ session }: { session: Session }) {
       return;
     }
 
+    const notasCombo = notaLineaCombo(combo.descuentoPct, combo.numProductos);
+    const lineaExistente = buscarLineaMisma(
+      combo.id,
+      combo.precioUnitario,
+      notasCombo,
+    );
+    if (lineaExistente) {
+      await actualizarCantidadLinea(lineaExistente, lineaExistente.cantidad + qty);
+      setCantidadMenu("1");
+      return;
+    }
+
     setProcesando(true);
 
     const { data: linea, error: lineaError } = await supabase
@@ -454,7 +501,7 @@ export function PuntoVenta({ session }: { session: Session }) {
         producto_id: combo.id,
         cantidad: qty,
         precio_unitario: combo.precioUnitario,
-        notas: notaLineaCombo(combo.descuentoPct, combo.numProductos),
+        notas: notasCombo,
       })
       .select("id, producto_id, cantidad, precio_unitario, notas")
       .single();
@@ -502,7 +549,14 @@ export function PuntoVenta({ session }: { session: Session }) {
       return;
     }
 
-  setProcesando(true);
+    const lineaExistente = buscarLineaMisma(producto.id, producto.precio, null);
+    if (lineaExistente) {
+      await actualizarCantidadLinea(lineaExistente, lineaExistente.cantidad + qty);
+      setCantidadMenu("1");
+      return;
+    }
+
+    setProcesando(true);
 
     const { data: linea, error: lineaError } = await supabase
       .from("venta_lineas")
@@ -572,6 +626,82 @@ export function PuntoVenta({ session }: { session: Session }) {
 
     setLineas((prev) => prev.filter((l) => l.id !== lineaId));
     setProcesando(false);
+  }
+
+  function buscarLineaMisma(
+    productoId: string,
+    precioUnitario: number,
+    notas: string | null,
+  ): VentaLinea | undefined {
+    return lineas.find(
+      (l) =>
+        l.producto_id === productoId &&
+        l.precio_unitario === precioUnitario &&
+        (l.notas ?? null) === (notas ?? null),
+    );
+  }
+
+  async function actualizarCantidadLinea(linea: VentaLinea, nuevaCantidad: number) {
+    if (!venta) {
+      return;
+    }
+    if (nuevaCantidad <= 0) {
+      await quitarLinea(linea.id);
+      return;
+    }
+    if (!linea.producto_id) {
+      return;
+    }
+
+    const esCombo = esIdComboEnCatalogo(linea.producto_id, catalogoProductos);
+    if (esCombo) {
+      const combo = combosVenta.find((c) => c.id === linea.producto_id);
+      if (combo && nuevaCantidad > combo.combosDisponibles) {
+        setError(
+          `Stock insuficiente para armar ${nuevaCantidad} combo(s). Máximo disponible: ${combo.combosDisponibles}.`,
+        );
+        return;
+      }
+    } else {
+      const stock = existencias.get(linea.producto_id) ?? 0;
+      if (nuevaCantidad > stock) {
+        const producto = productosPorId.get(linea.producto_id);
+        const nombre = producto?.nombre ?? "producto";
+        setError(
+          `Stock insuficiente para ${nombre}. Disponible: ${stock}, pediste: ${nuevaCantidad}.`,
+        );
+        return;
+      }
+    }
+
+    setMensaje(null);
+    setError(null);
+    setProcesando(true);
+
+    const { error: updateError } = await supabase
+      .from("venta_lineas")
+      .update({ cantidad: nuevaCantidad })
+      .eq("id", linea.id);
+
+    if (updateError) {
+      setProcesando(false);
+      setError(updateError.message);
+      return;
+    }
+
+    try {
+      await sincronizarTotal(venta.id);
+    } catch (e) {
+      setProcesando(false);
+      setError(e instanceof Error ? e.message : "Error al actualizar el total.");
+      return;
+    }
+
+    setLineas((prev) =>
+      prev.map((l) => (l.id === linea.id ? { ...l, cantidad: nuevaCantidad } : l)),
+    );
+    setProcesando(false);
+    setMensaje("Cantidad actualizada.");
   }
 
   async function actualizarExistencia(
@@ -823,247 +953,114 @@ export function PuntoVenta({ session }: { session: Session }) {
     await recargarBase(true);
   }
 
-  async function cerrarSesion() {
-    await supabase.auth.signOut();
+  async function agregarUnidadDesdeLinea(linea: VentaLinea) {
+    await actualizarCantidadLinea(linea, linea.cantidad + 1);
+  }
+
+  async function decrementarLinea(linea: VentaLinea) {
+    await actualizarCantidadLinea(linea, linea.cantidad - 1);
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold tracking-[0.14em] text-accent uppercase">
-            Ventas
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Carrito y cobro</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Menú visual tipo mostrador: ingredientes y platillos en el mismo carril de
-            imágenes. Los platillos aplican descuento por componentes al cobrar.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <Link
-            href="/"
-            className="rounded-lg border border-line bg-card px-3 py-2 font-medium hover:bg-background"
-          >
-            Inicio
-          </Link>
-          <button
-            type="button"
-            onClick={() => void cerrarSesion()}
-            className="rounded-lg border border-line px-3 py-2 text-muted hover:text-foreground"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </header>
+    <div className="flex flex-col gap-3">
+      <PosOperacionHeader
+        cajas={cajas}
+        cajaId={cajaId}
+        onCajaChange={setCajaId}
+        venta={venta}
+        procesando={procesando}
+        emailUsuario={session.user.email ?? null}
+        query={filtroQuery}
+        onQueryChange={setFiltroQuery}
+        tab={filtroTab}
+        onTabChange={setFiltroTab}
+        onIniciarVenta={() => void iniciarVenta()}
+        formatoMoneda={formatoMoneda}
+        cargando={cargando}
+      />
 
       {error ? (
-        <p
-          className="rounded-2xl border border-danger/30 bg-danger-soft px-5 py-3 text-sm text-danger"
-          role="alert"
-        >
+        <p role="alert" className="cine-banner-error px-4 py-3 text-sm">
           {error}
         </p>
       ) : null}
       {mensaje ? (
-        <p
-          className="rounded-2xl border border-accent/30 bg-accent-soft px-5 py-3 text-sm text-accent"
-          role="status"
-        >
+        <p role="status" className="cine-banner-ok px-4 py-3 text-sm">
           {mensaje}
         </p>
       ) : null}
 
-      <section className="rounded-2xl border border-line bg-card px-5 py-6">
-        <h2 className="text-lg font-semibold">Ticket actual</h2>
-        <div className="mt-4 flex flex-wrap items-end gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Caja</span>
-            <select
-              value={cajaId}
-              onChange={(e) => setCajaId(e.target.value)}
-              disabled={procesando || Boolean(venta) || cajas.length === 0}
-              className="rounded-lg border border-line bg-background px-3 py-2"
-            >
-              {cajas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!venta ? (
-            <button
-              type="button"
-              onClick={() => void iniciarVenta()}
-              disabled={procesando || cargando || cajas.length === 0}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              Iniciar venta
-            </button>
-          ) : (
-            <p className="text-sm text-muted">
-              Folio{" "}
-              <strong className="text-foreground">{venta.folio ?? venta.id}</strong>
-              {" · "}
-              Total <strong className="text-foreground">{formatoMoneda(venta.total)}</strong>
-            </p>
-          )}
-        </div>
-        {cajas.length === 0 && !cargando ? (
-          <p className="mt-3 text-sm text-muted">
-            No hay cajas activas. Agrega una en el módulo de catálogos.
-          </p>
-        ) : null}
-      </section>
-
-      {venta ? (
-        <>
-          <MenuConcesionVenta
-            articulos={articulosMenu}
-            articuloId={articuloMenuId}
-            onArticuloIdChange={setArticuloMenuId}
-            cantidad={cantidadMenu}
-            onCantidadChange={setCantidadMenu}
-            onAgregar={() => void agregarArticuloAlPedido()}
-            formatoMoneda={formatoMoneda}
-            procesando={procesando}
-          />
-
-          <section className="rounded-2xl border border-line bg-card px-5 py-6">
-            <h2 className="text-lg font-semibold">Líneas del carrito</h2>
-            {lineas.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">El carrito está vacío.</p>
-            ) : (
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[520px] border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-line text-muted">
-                      <th className="py-2 pr-4 font-medium">Producto</th>
-                      <th className="py-2 pr-4 font-medium">Cant.</th>
-                      <th className="py-2 pr-4 font-medium">P. unit.</th>
-                      <th className="py-2 pr-4 font-medium">Importe</th>
-                      <th className="py-2 font-medium" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lineas.map((linea) => {
-                      const producto = linea.producto_id
-                        ? catalogoPorId.get(linea.producto_id)
-                        : null;
-                      const importe = linea.cantidad * linea.precio_unitario;
-                      return (
-                        <tr key={linea.id} className="border-b border-line/70">
-                          <td className="py-2 pr-4">
-                            {producto ? (
-                              <span>
-                                {etiquetaProducto(producto.nombre, producto.codigo)}
-                                {linea.notas ? (
-                                  <span className="mt-0.5 block text-xs text-muted">
-                                    {linea.notas}
-                                  </span>
-                                ) : null}
-                              </span>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td className="py-2 pr-4 font-mono tabular-nums">
-                            {linea.cantidad}
-                          </td>
-                          <td className="py-2 pr-4 font-mono tabular-nums">
-                            {formatoMoneda(linea.precio_unitario)}
-                          </td>
-                          <td className="py-2 pr-4 font-mono tabular-nums">
-                            {formatoMoneda(importe)}
-                          </td>
-                          <td className="py-2">
-                            <button
-                              type="button"
-                              onClick={() => void quitarLinea(linea.id)}
-                              disabled={procesando}
-                              className="text-xs text-danger hover:underline disabled:opacity-60"
-                            >
-                              Quitar
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <form
-              onSubmit={(e) => void cobrarVenta(e)}
-              className="mt-6 flex max-w-xl flex-col gap-3 border-t border-line pt-6"
-            >
-              <h3 className="text-base font-semibold">Cobrar</h3>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Método de pago</span>
-                <select
-                  value={metodoPago}
-                  onChange={(e) => setMetodoPago(e.target.value)}
-                  disabled={procesando || lineas.length === 0}
-                  className="rounded-lg border border-line bg-background px-3 py-2"
-                >
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="transferencia">Transferencia</option>
-                </select>
-              </label>
-              <p className="text-sm">
-                Total a cobrar:{" "}
-                <strong className="text-lg">{formatoMoneda(venta.total)}</strong>
-              </p>
-              <button
-                type="submit"
-                disabled={procesando || lineas.length === 0}
-                className="w-fit rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {procesando ? "Procesando…" : "Cobrar venta"}
-              </button>
-            </form>
-          </section>
-        </>
+      {cajas.length === 0 && !cargando ? (
+        <p className="text-sm text-muted">
+          No hay cajas activas. Agrega una en el módulo de catálogos.
+        </p>
       ) : null}
 
-      <section className="rounded-2xl border border-line bg-card px-5 py-6">
-        <h2 className="text-lg font-semibold">Ventas cobradas recientes</h2>
-        <p className="mt-1 text-sm text-muted">
-          Cancelación con movimiento{" "}
-          <code className="font-mono text-xs">cancelacion</code> y devolución de stock.
-        </p>
-        {ventasCobradas.length === 0 && !cargando ? (
-          <p className="mt-3 text-sm text-muted">No hay ventas cobradas.</p>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-4">
-            {ventasCobradas.map((v) => (
-              <li
-                key={v.id}
-                className="flex flex-col gap-3 rounded-xl border border-line/70 bg-background px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="text-sm">
-                  <p className="font-medium">
-                    {v.folio ?? v.id.slice(0, 8)}{" "}
-                    <span className="text-muted">· {formatoFecha(v.created_at)}</span>
-                  </p>
-                  <p className="text-muted">{formatoMoneda(v.total)}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => abrirModalCancelar(v)}
-                  disabled={procesando}
-                  className="rounded-lg border border-danger/40 px-3 py-2 text-sm font-medium text-danger disabled:opacity-60"
-                >
-                  Cancelar venta
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <PosLayout
+        catalogo={
+          venta ? (
+            <CatalogoVentaCinepolis
+              articulos={articulosFiltrados}
+              articuloId={articuloMenuId}
+              onArticuloIdChange={setArticuloMenuId}
+              cantidad={cantidadMenu}
+              onCantidadChange={setCantidadMenu}
+              onAgregar={() => void agregarArticuloAlPedido()}
+              formatoMoneda={formatoMoneda}
+              procesando={procesando}
+            />
+          ) : (
+            <div className="cine-panel px-5 py-12 text-center text-sm text-muted">
+              Abre caja para ver el catálogo y agregar artículos.
+            </div>
+          )
+        }
+        ticket={
+          <TicketResumenVivo
+            folio={venta?.folio ?? null}
+            ventaId={venta?.id ?? ""}
+            lineas={lineasTicket}
+            total={venta?.total ?? 0}
+            metodoPago={metodoPago}
+            onMetodoPagoChange={setMetodoPago}
+            onCobrar={(e) => void cobrarVenta(e)}
+            onDecrementarLinea={(linea) => {
+              const original = lineas.find((l) => l.id === linea.id);
+              if (original) {
+                void decrementarLinea(original);
+              }
+            }}
+            onAgregarUnidad={(linea) => {
+              const original = lineas.find((l) => l.id === linea.id);
+              if (original) {
+                void agregarUnidadDesdeLinea(original);
+              }
+            }}
+            procesando={procesando}
+            formatoMoneda={formatoMoneda}
+            ventaAbierta={Boolean(venta)}
+          />
+        }
+        inferior={
+          <VentasRecientesPanel
+            ventas={ventasCobradas.map((v) => ({
+              ...v,
+              etiquetaFecha: formatoFecha(v.created_at),
+            }))}
+            cargando={cargando}
+            procesando={procesando}
+            onCancelar={(v) =>
+              abrirModalCancelar({
+                id: v.id,
+                folio: v.folio,
+                total: v.total,
+                created_at: v.created_at,
+              })
+            }
+            formatoMoneda={formatoMoneda}
+          />
+        }
+      />
 
       {cancelarModal ? (
         <div
@@ -1075,7 +1072,7 @@ export function PuntoVenta({ session }: { session: Session }) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="cancelar-pedido-titulo"
-            className="brand-surface w-full max-w-md rounded-2xl p-6 shadow-xl"
+            className="cine-panel w-full max-w-md p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {cancelarModal.paso === 1 ? (
@@ -1100,7 +1097,7 @@ export function PuntoVenta({ session }: { session: Session }) {
                   <button
                     type="button"
                     onClick={cerrarModalCancelar}
-                    className="rounded-lg border border-line px-4 py-2 text-sm font-medium"
+                    className="cine-btn-secondary px-4 py-2 text-sm"
                   >
                     No, volver
                   </button>
@@ -1111,7 +1108,7 @@ export function PuntoVenta({ session }: { session: Session }) {
                         prev ? { ...prev, paso: 2 } : prev,
                       )
                     }
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white"
+                    className="cine-btn-primary px-4 py-2 text-sm"
                   >
                     Sí, continuar
                   </button>
@@ -1146,7 +1143,7 @@ export function PuntoVenta({ session }: { session: Session }) {
                         prev ? { ...prev, paso: 1 } : prev,
                       )
                     }
-                    className="rounded-lg border border-line px-4 py-2 text-sm font-medium"
+                    className="cine-btn-secondary px-4 py-2 text-sm"
                   >
                     Volver
                   </button>
@@ -1159,7 +1156,7 @@ export function PuntoVenta({ session }: { session: Session }) {
                         motivoCancelacion.trim() || null,
                       )
                     }
-                    className="rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    className="cine-btn-primary !bg-danger px-4 py-2 text-sm disabled:opacity-60"
                   >
                     {procesando ? "Cancelando…" : "Confirmar cancelación"}
                   </button>

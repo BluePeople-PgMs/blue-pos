@@ -1,34 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  /* Trattoria: verde oliva, crema, blanco */
-  --brand-green: #2d6a4f;
-  --brand-green-deep: #1b4332;
-  --brand-green-soft: #d8f3dc;
-  --brand-cream: #f7f3eb;
-  --brand-cream-deep: #e8e0d4;
-  --brand-terracotta: #9c6644;
+  /* Cinépolis-inspired tokens */
+  --cine-navy: #0a1931;
+  --cine-navy-deep: #00205b;
+  --cine-cta: #0055ff;
+  --cine-cta-hover: #0066cc;
+  --cine-gold: #ffc72c;
+  --cine-surface: #f4f6f9;
+  --cine-card: #ffffff;
+  --cine-line: #e2e8f0;
+  --cine-ok: #10b981;
+  --cine-busy: #ef4444;
 
-  --background: #f5f0e8;
-  --foreground: #1f2e24;
-  --card: #ffffff;
-  --line: #ddd5c8;
-  --muted: #5c6b62;
-  --accent: #2d6a4f;
-  --accent-hover: #1b4332;
-  --accent-soft: #e8f5e9;
-  --warn: #b45309;
+  --background: var(--cine-surface);
+  --foreground: #0f172a;
+  --card: var(--cine-card);
+  --line: var(--cine-line);
+  --muted: #64748b;
+  --accent: var(--cine-cta);
+  --accent-hover: var(--cine-cta-hover);
+  --accent-soft: #e8f0ff;
+  --warn: #d97706;
   --warn-soft: #fef3c7;
-  --danger: #b91c1c;
+  --danger: var(--cine-busy);
   --danger-soft: #fee2e2;
 
-  /* Compat con clases tailwind existentes */
-  --brand-navy: var(--brand-green-deep);
-  --brand-navy-deep: #143d2e;
-  --brand-coral: var(--brand-green);
-  --brand-coral-hover: var(--accent-hover);
-  --brand-teal: var(--brand-cream);
-  --brand-teal-deep: var(--brand-cream-deep);
+  /* Compat legacy brand-* */
+  --brand-green: var(--cine-cta);
+  --brand-green-deep: var(--cine-navy);
+  --brand-green-soft: var(--accent-soft);
+  --brand-cream: var(--cine-surface);
+  --brand-cream-deep: var(--cine-line);
+  --brand-terracotta: var(--cine-gold);
+  --brand-navy: var(--cine-navy);
+  --brand-navy-deep: var(--cine-navy-deep);
+  --brand-coral: var(--cine-cta);
+  --brand-coral-hover: var(--cine-cta-hover);
+  --brand-teal: var(--cine-surface);
+  --brand-teal-deep: var(--cine-line);
 }
 
 @theme inline {
@@ -54,50 +64,198 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Punto de venta: panel tipo concesión (inspirado en flujo visual de mostrador con imágenes). */
-.concesion-panel {
-  background: #121820;
+/* POS Cinépolis — catálogo y utilidades */
+.cine-panel {
+  background: var(--cine-card);
+  border: 1px solid var(--cine-line);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(10, 25, 49, 0.06);
 }
 
-.concesion-header {
-  background: linear-gradient(180deg, #1a2430 0%, #121820 100%);
+.cine-catalogo-panel {
+  background: var(--cine-card);
+  border: 1px solid var(--cine-line);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.concesion-scroll {
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
-  scrollbar-color: #f5c45155 transparent;
+.cine-catalogo-header {
+  background: linear-gradient(135deg, var(--cine-navy) 0%, var(--cine-navy-deep) 100%);
+  color: #fff;
 }
 
-.concesion-card {
-  background: #1c2530;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+.cine-catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.25rem;
+  background: var(--cine-surface);
+  max-height: min(62vh, 720px);
+  overflow-y: auto;
 }
 
-.concesion-card-pie {
-  background: #161e28;
+@media (min-width: 1280px) {
+  .cine-catalogo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  }
 }
 
-.concesion-btn-agregar {
-  background: linear-gradient(180deg, #f5c451 0%, #e8a82e 100%);
-  box-shadow: 0 4px 14px rgba(245, 196, 81, 0.35);
+.cine-catalogo-card {
+  background: var(--cine-card);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(10, 25, 49, 0.08);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
-.concesion-btn-agregar:hover:not(:disabled) {
-  filter: brightness(1.05);
+.cine-catalogo-card:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(0, 85, 255, 0.12);
 }
 
-.concesion-btn-agregar:disabled {
+.cine-catalogo-card--activo {
+  border-color: var(--cine-cta);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cine-cta) 22%, transparent);
+}
+
+.cine-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cine-pill--gold {
+  background: var(--cine-gold);
+  color: var(--cine-navy);
+}
+
+.cine-pill--cta {
+  background: var(--cine-cta);
+  color: #fff;
+}
+
+.cine-pill--ok {
+  background: color-mix(in srgb, var(--cine-ok) 18%, white);
+  color: #047857;
+}
+
+.cine-pill--busy {
+  background: color-mix(in srgb, var(--cine-busy) 14%, white);
+  color: #b91c1c;
+}
+
+.cine-chip {
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid var(--cine-line);
+  background: var(--cine-card);
+  padding: 0.45rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.cine-chip:hover:not(:disabled) {
+  border-color: var(--cine-cta);
+}
+
+.cine-chip--activo {
+  border-color: var(--cine-navy);
+  background: var(--cine-navy);
+  color: #fff;
+}
+
+.cine-btn-primary {
+  min-height: 2.75rem;
+  border-radius: 10px;
+  background: var(--cine-cta);
+  color: #fff;
+  font-weight: 700;
+  transition: background 0.15s ease;
+}
+
+.cine-btn-primary:hover:not(:disabled) {
+  background: var(--cine-cta-hover);
+}
+
+.cine-btn-primary:disabled {
   opacity: 0.55;
 }
 
+.cine-btn-secondary {
+  min-height: 2.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--cine-line);
+  background: var(--cine-card);
+  color: var(--cine-navy);
+  font-weight: 600;
+}
+
+.cine-btn-gold {
+  min-height: 2.75rem;
+  border-radius: 10px;
+  background: var(--cine-gold);
+  color: var(--cine-navy);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cine-ticket-sticky {
+  position: sticky;
+  top: 0.75rem;
+  display: flex;
+  max-height: calc(100dvh - 1.5rem);
+  flex-direction: column;
+}
+
+.cine-pos-header {
+  background: linear-gradient(90deg, var(--cine-navy) 0%, var(--cine-navy-deep) 100%);
+  color: #fff;
+  border-bottom: 3px solid var(--cine-gold);
+}
+
+.cine-banner-error {
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--cine-busy) 35%, transparent);
+  background: var(--danger-soft);
+  color: #b91c1c;
+}
+
+.cine-banner-ok {
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--cine-ok) 35%, transparent);
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.concesion-panel {
+  background: var(--cine-card);
+  border: 1px solid var(--cine-line);
+  border-radius: 12px;
+}
+
+.concesion-btn-agregar {
+  min-height: 2.75rem;
+  border-radius: 10px;
+  background: var(--cine-gold);
+  color: var(--cine-navy);
+  font-weight: 800;
+}
+
 body {
-  background: linear-gradient(
-    165deg,
-    var(--brand-cream) 0%,
-    var(--background) 40%,
-    #faf8f4 100%
-  );
+  background: var(--cine-surface);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 1rem;
@@ -130,7 +288,7 @@ body {
   right: -8%;
   width: min(85vw, 520px);
   height: 45%;
-  background: var(--brand-green);
+  background: var(--cine-navy);
   transform: rotate(8deg);
   border-radius: 40% 60% 50% 40%;
 }
@@ -191,6 +349,15 @@ body {
   max-width: 56rem;
 }
 
+.app-main--pos {
+  max-width: none;
+  width: 100%;
+  padding-inline: clamp(0.75rem, 2vw, 1.5rem);
+  padding-block: clamp(0.75rem, 2vw, 1.25rem) 2rem;
+  gap: 1rem;
+  background: var(--cine-surface);
+}
+
 /* --- Login: explorador atenuado de fondo --- */
 .login-scene {
   position: relative;
@@ -208,13 +375,13 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-color: var(--brand-cream);
+  background-color: var(--cine-surface);
   background-image:
     linear-gradient(
       165deg,
-      rgba(255, 255, 255, 0.92) 0%,
-      rgba(247, 243, 235, 0.88) 40%,
-      rgba(232, 245, 238, 0.82) 100%
+      rgba(255, 255, 255, 0.94) 0%,
+      rgba(244, 246, 249, 0.9) 50%,
+      rgba(232, 240, 255, 0.85) 100%
     ),
     url("/login-fondo.jpg");
   background-size: cover;
@@ -256,8 +423,8 @@ body {
 .brand-login-shell {
   background: linear-gradient(
     145deg,
-    var(--brand-green-deep),
-    var(--brand-green)
+    var(--cine-navy-deep),
+    var(--cine-navy)
   );
   clip-path: none;
   border-radius: 0.75rem 0.75rem 0 0;
@@ -281,7 +448,7 @@ body {
 }
 
 .brand-field-line:focus {
-  border-bottom-color: var(--brand-green);
+  border-bottom-color: var(--cine-cta);
 }
 
 .brand-field-line--toggle {
@@ -289,7 +456,7 @@ body {
 }
 
 .brand-btn-primary {
-  background: var(--brand-green);
+  background: var(--cine-cta);
   color: #fff;
   font-weight: 600;
   border-radius: 0.5rem;
@@ -317,7 +484,7 @@ body {
 }
 
 .brand-btn-secondary:hover {
-  border-color: var(--brand-green);
+  border-color: var(--cine-cta);
   background: var(--accent-soft);
 }
 
@@ -335,11 +502,21 @@ body {
   z-index: 2;
   background: linear-gradient(
     90deg,
-    var(--brand-green-deep),
-    var(--brand-green)
+    var(--cine-navy) 0%,
+    var(--cine-navy-deep) 100%
   );
-  border-bottom: 2px solid var(--brand-cream-deep);
+  border-bottom: 3px solid var(--cine-gold);
   color: #fff;
+}
+
+.brand-nav--compact .brand-nav-scroll {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .brand-nav--compact .brand-nav-scroll {
+    display: flex;
+  }
 }
 
 .brand-nav a {
@@ -363,5 +540,5 @@ main .rounded-2xl.border.border-line.bg-card {
 }
 
 .overlay-scrim {
-  background: color-mix(in srgb, var(--brand-green-deep) 55%, transparent);
+  background: color-mix(in srgb, var(--cine-navy) 62%, transparent);
 }

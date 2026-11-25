@@ -35,7 +35,7 @@ export function CatalogoLayout({
         <div className="flex flex-wrap gap-2 text-sm">
           <Link
             href="/catalogos"
-            className="brand-surface rounded-lg px-3 py-2 font-medium hover:bg-white"
+            className="cine-btn-secondary inline-flex px-3 py-2 text-sm"
           >
             Hub de catálogos
           </Link>
