@@ -8,7 +8,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const PROJECT_REF = "tyclvddlsxksjnfcqalt";
+const PROJECT_REF =
+  process.env.SUPABASE_PROJECT_REF?.trim() ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
+    /^https:\/\/([^.]+)\.supabase\.co/,
+  )?.[1] ||
+  "fuegbnbhzkzktuumpckm";
 
 function loadToken() {
   if (process.env.SUPABASE_ACCESS_TOKEN?.trim()) {

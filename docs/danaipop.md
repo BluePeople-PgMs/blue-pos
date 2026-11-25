@@ -1,0 +1,34 @@
+# Rama `danaipop` — proyecto Supabase `grupos-blue`
+
+## Base de datos
+
+- Proyecto en Supabase: **grupos-blue** (ref `fuegbnbhzkzktuumpckm`, región us-east-2).
+- Esquema: mismas migraciones que el repo en `supabase/migrations/` (aplicadas con el plugin Supabase de Cursor o `supabase db push` cuando tengas CLI enlazado).
+- Catálogo Trattoria: `npm run sembrar:catalogo` (una vez por base vacía).
+- Recetas: `npm run sembrar:recetas` después del catálogo.
+
+## Variables locales
+
+En `.env.local` (no se commitea):
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://fuegbnbhzkzktuumpckm.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key del proyecto grupos-blue>
+```
+
+Obtén la clave en Supabase → Settings → API, o pídele al agente que use el plugin **Supabase** (`get_publishable_keys`).
+
+## Plugin Supabase en Cursor
+
+Con el plugin conectado, el agente puede:
+
+- Listar proyectos y elegir `grupos-blue`
+- Aplicar migraciones (`apply_migration`)
+- Ejecutar SQL, revisar tablas y asesores de seguridad
+
+La app Next.js solo necesita las dos variables `NEXT_PUBLIC_*` anteriores; el plugin no sustituye `.env.local`, pero sirve para crear el proyecto, el esquema y el sembrado asistido.
+
+## Git
+
+- Rama: `danaipop`
+- La rama `slytherin` sigue documentada para el proyecto compartido `blue-pos` en [slytherin.md](./slytherin.md).
