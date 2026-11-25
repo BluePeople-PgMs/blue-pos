@@ -28,6 +28,17 @@ Con el plugin conectado, el agente puede:
 
 La app Next.js solo necesita las dos variables `NEXT_PUBLIC_*` anteriores; el plugin no sustituye `.env.local`, pero sirve para crear el proyecto, el esquema y el sembrado asistido.
 
+## Stripe
+
+Cobro con tarjeta en Ventas y Pagos, cuenta de prueba de Blue People. En `.env.local`:
+
+```env
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+```
+
+La secret key no va al navegador ni al repo. La migración `20261125170000_pagos_stripe.sql` agrega las columnas de Stripe en `pagos`. Stripe Tax no calcula IVA hasta que el entorno de prueba tenga domicilio fiscal. El PDF de la factura de Stripe no es un CFDI.
+
 ## Login sin confirmar correo
 
 Para capacitación puedes:

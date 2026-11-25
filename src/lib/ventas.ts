@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseBrowser } from "@/lib/supabase";
 
 export type ProductoVenta = {
@@ -35,6 +36,15 @@ export type PagoVenta = {
   metodo: string;
   monto: number;
   cuando: string;
+  stripePaymentIntentId: string | null;
+  stripeInvoiceId: string | null;
+};
+
+export type CobroStripe = {
+  checkoutSessionId: string;
+  paymentIntentId: string | null;
+  invoiceId: string | null;
+  monto: number;
 };
 
 export type CancelacionVenta = {
@@ -182,13 +192,16 @@ export async function listarVentas() {
   return { error: null, ventas: lista };
 }
 
-export async function leerVenta(ventaId: string) {
-  const { supabase, error: sesionError } = await exigirSesion();
+export async function leerVenta(ventaId: string, cliente?: SupabaseClient) {
+  const sesion = cliente
+    ? { supabase: cliente, error: null as string | null }
+    : await exigirSesion();
+  const supabase = sesion.supabase;
   if (!supabase) {
-    return { error: sesionError, venta: null as VentaDetalle | null };
+    return { error: sesion.error, venta: null as VentaDetalle | null };
   }
-  if (sesionError) {
-    return { error: sesionError, venta: null };
+  if (sesion.error) {
+    return { error: sesion.error, venta: null };
   }
 
   const { data: venta, error } = await supabase
@@ -255,18 +268,40 @@ export async function leerVenta(ventaId: string) {
   const estado = venta.estado as VentaDetalle["estado"];
 
   if (estado === "cobrada" || estado === "cancelada") {
-    const { data: pagoRow } = await supabase
+    const pagoConStripe = await supabase
       .from("pagos")
-      .select("metodo, monto, created_at")
+      .select(
+        "metodo, monto, created_at, stripe_payment_intent_id, stripe_invoice_id",
+      )
       .eq("venta_id", ventaId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+    const pagoRow = pagoConStripe.error
+      ? (
+          await supabase
+            .from("pagos")
+            .select("metodo, monto, created_at")
+            .eq("venta_id", ventaId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        ).data
+      : pagoConStripe.data;
     if (pagoRow) {
+      const fila = pagoRow as {
+        metodo: string;
+        monto: number;
+        created_at: string;
+        stripe_payment_intent_id?: string | null;
+        stripe_invoice_id?: string | null;
+      };
       pago = {
-        metodo: pagoRow.metodo,
-        monto: Number(pagoRow.monto),
-        cuando: pagoRow.created_at,
+        metodo: fila.metodo,
+        monto: Number(fila.monto),
+        cuando: fila.created_at,
+        stripePaymentIntentId: fila.stripe_payment_intent_id ?? null,
+        stripeInvoiceId: fila.stripe_invoice_id ?? null,
       };
     }
   }
@@ -530,14 +565,28 @@ function acumularSalidaDesdeProducto(
 export async function cobrarVenta(datos: {
   ventaId: string;
   metodo: MetodoPago;
+  stripe?: CobroStripe;
+  cliente?: SupabaseClient;
 }) {
-  const { supabase, error: sesionError } = await exigirSesion();
-  if (!supabase) return { error: sesionError };
-  if (sesionError) return { error: sesionError };
+  if (datos.metodo === "tarjeta" && !datos.stripe) {
+    return {
+      error: "La tarjeta se cobra en el formulario de Stripe, no como un registro manual.",
+    };
+  }
 
-  const detalle = await leerVenta(datos.ventaId);
+  const sesion = datos.cliente
+    ? { supabase: datos.cliente, error: null as string | null }
+    : await exigirSesion();
+  const supabase = sesion.supabase;
+  if (!supabase) return { error: sesion.error };
+  if (sesion.error) return { error: sesion.error };
+
+  const detalle = await leerVenta(datos.ventaId, datos.cliente);
   if (detalle.error || !detalle.venta) {
     return { error: detalle.error ?? "Venta no encontrada." };
+  }
+  if (detalle.venta.estado === "cobrada") {
+    return { error: null };
   }
   if (detalle.venta.estado !== "abierta") {
     return { error: "Solo puedes cobrar una venta abierta." };
@@ -729,17 +778,35 @@ export async function cobrarVenta(datos: {
     }
   }
 
-  const total = detalle.venta.total;
-  const { error: pagoError } = await supabase.from("pagos").insert({
-    venta_id: datos.ventaId,
-    metodo: datos.metodo,
-    monto: total,
-  });
-  if (pagoError) return { error: mensajeLegible(pagoError.message) };
+  const total = datos.stripe?.monto ?? detalle.venta.total;
+  const { data: pagoExistente, error: pagoExistenteError } = await supabase
+    .from("pagos")
+    .select("id")
+    .eq("venta_id", datos.ventaId)
+    .limit(1)
+    .maybeSingle();
+  if (pagoExistenteError) {
+    return { error: mensajeLegible(pagoExistenteError.message) };
+  }
+  if (!pagoExistente) {
+    const { error: pagoError } = await supabase.from("pagos").insert({
+      venta_id: datos.ventaId,
+      metodo: datos.metodo,
+      monto: total,
+      ...(datos.stripe
+        ? {
+            stripe_checkout_session_id: datos.stripe.checkoutSessionId,
+            stripe_payment_intent_id: datos.stripe.paymentIntentId,
+            stripe_invoice_id: datos.stripe.invoiceId,
+          }
+        : {}),
+    });
+    if (pagoError) return { error: mensajeLegible(pagoError.message) };
+  }
 
   const { error: estadoError } = await supabase
     .from("ventas")
-    .update({ estado: "cobrada" })
+    .update({ estado: "cobrada", total })
     .eq("id", datos.ventaId);
   if (estadoError) return { error: mensajeLegible(estadoError.message) };
 

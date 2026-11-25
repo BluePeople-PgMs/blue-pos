@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { VentasVista } from "@/components/ventas/VentasVista";
 import { RequiereSesion } from "@/components/RequiereSesion";
 
@@ -26,7 +27,13 @@ export default function VentasPage() {
             Inicio
           </Link>
         </header>
-        <VentasVista />
+        <Suspense
+          fallback={
+            <p className="text-sm text-muted">Preparando captura de pedidos…</p>
+          }
+        >
+          <VentasVista />
+        </Suspense>
       </main>
     </RequiereSesion>
   );

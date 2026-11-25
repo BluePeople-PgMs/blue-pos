@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormularioTarjeta } from "@/components/pagos/FormularioTarjeta";
 import {
   VentasPosLayout,
   type TipoCatalogoVentas,
@@ -25,6 +27,10 @@ import {
   type VentaDetalle,
   type VentaLista,
 } from "@/lib/ventas";
+import {
+  confirmarSesionStripe,
+  reembolsarTarjeta,
+} from "@/lib/reembolso-stripe";
 
 function dinero(valor: number) {
   return new Intl.NumberFormat("es-MX", {
@@ -90,12 +96,14 @@ function InsigniaEstado({ estado }: { estado: VentaLista["estado"] }) {
 
 const METODOS: { id: MetodoPago; titulo: string; detalle: string }[] = [
   { id: "efectivo", titulo: "Efectivo", detalle: "Caja" },
-  { id: "tarjeta", titulo: "Tarjeta", detalle: "Terminal" },
+  { id: "tarjeta", titulo: "Tarjeta", detalle: "Stripe" },
   { id: "transferencia", titulo: "Transferencia", detalle: "SPEI" },
 ];
 
 export function VentasVista() {
   const { esAdministrador } = useRol();
+  const parametros = useSearchParams();
+  const sesionStripe = parametros.get("sesion_stripe");
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
   const [puedeOperar, setPuedeOperar] = useState(false);
@@ -301,8 +309,66 @@ export function VentasVista() {
     publicarMensaje(`${producto.nombre} agregado al pedido.`, "ok");
   }
 
+  async function despuesDeCobro(ventaObjetivo: string, texto: string) {
+    const actual = venta?.id === ventaObjetivo ? venta : null;
+    const antes = actual
+      ? await existenciasDeLineas(actual.lineasDetalle)
+      : { cantidades: new Map<string, number>() };
+    await recargar();
+    await cargarVenta(ventaObjetivo);
+    const despues = actual
+      ? await existenciasDeLineas(actual.lineasDetalle)
+      : { cantidades: new Map<string, number>() };
+    const resumen = actual
+      ? textoResumenExistencia(
+          resumenCambiosExistencia(
+            actual.lineasDetalle,
+            antes.cantidades,
+            despues.cantidades,
+          ),
+        )
+      : "";
+    publicarMensaje(
+      resumen ? `${texto} Inventario: ${resumen}.` : texto,
+      "ok",
+      true,
+    );
+  }
+
+  useEffect(() => {
+    if (!sesionStripe) return;
+    let activo = true;
+    void (async () => {
+      const confirmado = await confirmarSesionStripe(sesionStripe);
+      if (!activo) return;
+      if (confirmado.error || !confirmado.ventaId) {
+        publicarMensaje(
+          confirmado.error ?? "No se pudo cerrar la venta pagada en Stripe.",
+          "error",
+        );
+        return;
+      }
+      const factura = confirmado.facturaUrl
+        ? ` Factura: ${confirmado.facturaUrl}. No sustituye un CFDI.`
+        : "";
+      await despuesDeCobro(
+        confirmado.ventaId,
+        `¡Cobrado con tarjeta!${factura}`,
+      );
+    })();
+    return () => {
+      activo = false;
+    };
+    // Solo al volver de Stripe. despuesDeCobro cambia en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sesionStripe]);
+
   async function cobrar() {
     if (!ventaId || !venta) return;
+    if (metodo === "tarjeta") {
+      publicarMensaje("Usa el formulario de tarjeta para cobrar.", "info");
+      return;
+    }
     setEnlaceInventario(false);
     const antes = await existenciasDeLineas(venta.lineasDetalle);
     setEnviando(true);
@@ -352,6 +418,17 @@ export function VentasVista() {
     setEnlaceInventario(false);
     const antes = await existenciasDeLineas(venta.lineasDetalle);
     setEnviando(true);
+    if (venta.pago?.metodo === "tarjeta" && venta.pago.stripePaymentIntentId) {
+      const reembolso = await reembolsarTarjeta({
+        ventaId,
+        paymentIntentId: venta.pago.stripePaymentIntentId,
+      });
+      if (reembolso.error) {
+        setEnviando(false);
+        publicarMensaje(reembolso.error, "error");
+        return;
+      }
+    }
     const { error } = await cancelarVentaCobrada({
       ventaId,
       motivo: motivo,
@@ -457,6 +534,16 @@ export function VentasVista() {
         }
         onQuitarLinea={(lineaId) => void quitarLinea(lineaId)}
         onCobrar={() => void cobrar()}
+        panelTarjeta={
+          venta && metodo === "tarjeta" ? (
+            <FormularioTarjeta
+              key={venta.id}
+              ventaId={venta.id}
+              disabled={!puedeOperar || enviando}
+              onCobrado={(aviso) => void despuesDeCobro(venta.id, aviso)}
+            />
+          ) : null
+        }
         onCancelarAbierta={() => void cancelarAbierta()}
         onCancelarCobrada={() => void cancelarCobrada()}
         dinero={dinero}

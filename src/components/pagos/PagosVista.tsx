@@ -9,6 +9,7 @@ import {
   registrarPago,
   type PagoLista,
 } from "@/lib/pagos";
+import { FormularioTarjeta } from "@/components/pagos/FormularioTarjeta";
 import {
   esMetodoPago,
   type MetodoPago,
@@ -98,6 +99,10 @@ export function PagosVista() {
   async function pagar() {
     if (!ventaId || !venta) {
       setMensaje("Elige una venta pendiente.");
+      return;
+    }
+    if (metodo === "tarjeta") {
+      setMensaje("Usa el formulario de tarjeta para cobrar.");
       return;
     }
     setEnviando(true);
@@ -192,6 +197,20 @@ export function PagosVista() {
               </select>
             </label>
 
+            {metodo === "tarjeta" && venta ? (
+              <FormularioTarjeta
+                key={venta.id}
+                ventaId={venta.id}
+                disabled={!puedeOperar || enviando}
+                onCobrado={(aviso) => {
+                  setMensaje(aviso);
+                  setVentaId("");
+                  setVenta(null);
+                  void recargar();
+                }}
+              />
+            ) : null}
+
             {mensaje ? (
               <p
                 role="status"
@@ -205,14 +224,16 @@ export function PagosVista() {
               </p>
             ) : null}
 
-            <button
-              type="button"
-              disabled={!puedeOperar || enviando || !venta}
-              onClick={() => void pagar()}
-              className="w-fit rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {enviando ? "Procesando…" : "Registrar pago"}
-            </button>
+            {metodo === "tarjeta" ? null : (
+              <button
+                type="button"
+                disabled={!puedeOperar || enviando || !venta}
+                onClick={() => void pagar()}
+                className="w-fit rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {enviando ? "Procesando…" : "Registrar pago"}
+              </button>
+            )}
           </div>
         )}
       </section>

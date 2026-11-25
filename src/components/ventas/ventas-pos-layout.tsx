@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useState, type ComponentType } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import type { MetodoPago, ProductoVenta, VentaDetalle, VentaLista } from "@/lib/ventas";
 import { urlImagenCatalogo } from "@/lib/imagen-catalogo";
 
@@ -37,6 +37,7 @@ export type VentasPosLayoutProps = {
   onCambiarCantidad: (lineaId: string, cantidad: number) => void;
   onQuitarLinea: (lineaId: string) => void;
   onCobrar: () => void;
+  panelTarjeta?: ReactNode;
   onCancelarAbierta: () => void;
   onCancelarCobrada: () => void;
   dinero: (n: number) => string;
@@ -76,6 +77,7 @@ export function VentasPosLayout({
   onCambiarCantidad,
   onQuitarLinea,
   onCobrar,
+  panelTarjeta,
   onCancelarAbierta,
   onCancelarCobrada,
   dinero,
@@ -393,20 +395,24 @@ export function VentasPosLayout({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    disabled={
-                      !puedeOperar ||
-                      enviando ||
-                      venta.lineasDetalle.length === 0
-                    }
-                    onClick={onCobrar}
-                    className="w-full rounded-xl bg-olive py-3.5 text-sm font-bold text-white shadow-sm disabled:opacity-50"
-                  >
-                    {enviando
-                      ? "Procesando…"
-                      : `Cobrar ${dinero(venta.total)}`}
-                  </button>
+                  {metodo === "tarjeta" && panelTarjeta ? (
+                    panelTarjeta
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={
+                        !puedeOperar ||
+                        enviando ||
+                        venta.lineasDetalle.length === 0
+                      }
+                      onClick={onCobrar}
+                      className="w-full rounded-xl bg-olive py-3.5 text-sm font-bold text-white shadow-sm disabled:opacity-50"
+                    >
+                      {enviando
+                        ? "Procesando…"
+                        : `Cobrar ${dinero(venta.total)}`}
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled={!puedeOperar || enviando}
