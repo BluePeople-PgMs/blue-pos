@@ -28,6 +28,14 @@ Con el plugin conectado, el agente puede:
 
 La app Next.js solo necesita las dos variables `NEXT_PUBLIC_*` anteriores; el plugin no sustituye `.env.local`, pero sirve para crear el proyecto, el esquema y el sembrado asistido.
 
+## Login sin confirmar correo
+
+Para capacitación puedes:
+
+1. **Supabase (Dashboard)** → Authentication → Sign in / Providers → Email → desactivar **Confirm email**, o
+2. **`npm run auth:sin-confirmacion`** con `SUPABASE_ACCESS_TOKEN` en `.env.local` (ver `.env.example`), o
+3. Con el plugin conectado, el agente puede **confirmar cuentas ya creadas** con SQL en `auth.users` (`email_confirmed_at`).
+
 ## Git
 
 - Rama: `danaipop`
