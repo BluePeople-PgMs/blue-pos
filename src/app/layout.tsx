@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist_Mono, Source_Sans_3 } from "next/font/google";
-import { AccesoLibre } from "@/components/AccesoLibre";
 import { BarraSesion } from "@/components/BarraSesion";
 import { RolProvider } from "@/components/contexto/RolContext";
 import { GuardiaRutaPorRol } from "@/components/GuardiaRutaPorRol";
@@ -38,9 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col pb-20 md:pb-0">
         <RolProvider>
           <BarraSesion />
-          <GuardiaRutaPorRol>
-            <AccesoLibre>{children}</AccesoLibre>
-          </GuardiaRutaPorRol>
+          <GuardiaRutaPorRol>{children}</GuardiaRutaPorRol>
           <NavMovilPrototipo />
         </RolProvider>
       </body>
