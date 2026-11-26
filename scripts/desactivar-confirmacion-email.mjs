@@ -8,26 +8,50 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const PROJECT_REF = "tyclvddlsxksjnfcqalt";
+function loadEnvLocal() {
+  try {
+    const envPath = resolve(process.cwd(), ".env.local");
+    const raw = readFileSync(envPath, "utf8");
+    const valores = new Map();
+    for (const line of raw.split("\n")) {
+      const limpio = line.trim();
+      if (!limpio || limpio.startsWith("#")) continue;
+      const corte = limpio.indexOf("=");
+      if (corte === -1) continue;
+      valores.set(limpio.slice(0, corte), limpio.slice(corte + 1).trim());
+    }
+    return valores;
+  } catch {
+    return new Map();
+  }
+}
+
+function projectRefFromUrl(url) {
+  const m = url.match(/^https:\/\/([^.]+)\.supabase\.co\/?$/);
+  return m?.[1] ?? null;
+}
 
 function loadToken() {
   if (process.env.SUPABASE_ACCESS_TOKEN?.trim()) {
     return process.env.SUPABASE_ACCESS_TOKEN.trim();
   }
-  try {
-    const envPath = resolve(process.cwd(), ".env.local");
-    const raw = readFileSync(envPath, "utf8");
-    for (const line of raw.split("\n")) {
-      const m = line.match(/^SUPABASE_ACCESS_TOKEN=(.+)$/);
-      if (m) return m[1].trim().replace(/^["']|["']$/g, "");
-    }
-  } catch {
-    // sin .env.local
-  }
+  const env = loadEnvLocal();
+  const token = env.get("SUPABASE_ACCESS_TOKEN");
+  if (token) return token.replace(/^["']|["']$/g, "");
   return null;
 }
 
+const env = loadEnvLocal();
 const token = loadToken();
+const projectRef =
+  projectRefFromUrl(env.get("NEXT_PUBLIC_SUPABASE_URL") ?? "") ??
+  process.env.SUPABASE_PROJECT_REF?.trim();
+if (!projectRef) {
+  console.error(
+    "No pude leer el ref del proyecto desde NEXT_PUBLIC_SUPABASE_URL en .env.local.",
+  );
+  process.exit(1);
+}
 if (!token) {
   console.error(
     [
@@ -43,7 +67,7 @@ if (!token) {
 }
 
 const res = await fetch(
-  `https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth`,
+  `https://api.supabase.com/v1/projects/${projectRef}/config/auth`,
   {
     method: "PATCH",
     headers: {

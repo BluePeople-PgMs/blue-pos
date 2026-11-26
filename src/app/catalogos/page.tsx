@@ -5,6 +5,9 @@ export const metadata = {
   title: "Catálogos · Trattoria Blue",
 };
 
+/** El layout lleva `RequiereSesion` (cliente); el índice no participa en instant navigation. */
+export const instant = false;
+
 const catalogos = [
   {
     href: "/catalogos/comidas",

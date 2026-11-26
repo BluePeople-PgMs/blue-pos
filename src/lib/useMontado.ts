@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-/** true solo tras el primer montaje en el navegador (evita desajustes de hidratación). */
+function suscribir() {
+  return () => {};
+}
+
+/** true en el navegador; false en SSR — evita desajustes de hidratación. */
 export function useMontado() {
-  const [montado, setMontado] = useState(false);
-  useEffect(() => setMontado(true), []);
-  return montado;
+  return useSyncExternalStore(suscribir, () => true, () => false);
 }

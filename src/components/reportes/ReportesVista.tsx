@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   generarReporte,
   type ResultadoReporte,
@@ -177,21 +177,23 @@ function MostrarResultado({ resultado }: { resultado: ResultadoReporte }) {
   );
 }
 
+function rangoUltimos30Dias() {
+  const hoy = new Date();
+  const hace30 = new Date(hoy);
+  hace30.setDate(hace30.getDate() - 30);
+  return {
+    desde: hace30.toISOString().slice(0, 10),
+    hasta: hoy.toISOString().slice(0, 10),
+  };
+}
+
 export function ReportesVista() {
-  const [desde, setDesde] = useState("");
-  const [hasta, setHasta] = useState("");
+  const [desde, setDesde] = useState(() => rangoUltimos30Dias().desde);
+  const [hasta, setHasta] = useState(() => rangoUltimos30Dias().hasta);
   const [tipo, setTipo] = useState<TipoReporte>("ventas");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ResultadoReporte | null>(null);
-
-  useEffect(() => {
-    const hoy = new Date();
-    const hace30 = new Date(hoy);
-    hace30.setDate(hace30.getDate() - 30);
-    setDesde(hace30.toISOString().slice(0, 10));
-    setHasta(hoy.toISOString().slice(0, 10));
-  }, []);
 
   async function consultar() {
     setCargando(true);
