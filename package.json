@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "sembrar:catalogo": "node --experimental-strip-types scripts/sembrar-catalogo.ts",
     "sembrar:recetas": "node --experimental-strip-types scripts/sembrar-recetas.ts",
-    "auth:sin-confirmacion": "node scripts/desactivar-confirmacion-email.mjs"
+    "auth:sin-confirmacion": "node scripts/desactivar-confirmacion-email.mjs",
+    "prueba:training": "node --experimental-strip-types scripts/prueba-training.ts",
+    "prueba:training:completo": "node --experimental-strip-types scripts/prueba-training.ts --completo"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.1",
