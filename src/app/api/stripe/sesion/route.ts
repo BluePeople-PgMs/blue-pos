@@ -52,7 +52,8 @@ export async function POST(request: Request) {
     mode: "payment" as const,
     currency: "mxn",
     billing_address_collection: "auto" as const,
-    customer_creation: "always" as const,
+    customer_creation: "if_required" as const,
+    allowed_payment_method_types: ["card"],
     invoice_creation: { enabled: true },
     line_items: lineas,
     metadata: { venta_id: ventaId },
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
   try {
     const session = await stripe.checkout.sessions.create(
       { ...base, automatic_tax: { enabled: true } },
-      { idempotencyKey: `checkout-${ventaId}-${centavos}-tax` },
+      { idempotencyKey: `checkout-${ventaId}-${centavos}-tarjeta-permitida` },
     );
     if (!session.client_secret) {
       return Response.json({ error: "Stripe no devolvió el formulario de pago." }, { status: 502 });
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
   try {
     const session = await stripe.checkout.sessions.create(
       { ...base, automatic_tax: { enabled: false } },
-      { idempotencyKey: `checkout-${ventaId}-${centavos}` },
+      { idempotencyKey: `checkout-${ventaId}-${centavos}-sin-iva` },
     );
     if (!session.client_secret) {
       return Response.json({ error: "Stripe no devolvió el formulario de pago." }, { status: 502 });

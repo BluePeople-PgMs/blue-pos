@@ -7,6 +7,8 @@ export const metadata = {
   title: "Ventas · Trattoria Blue",
 };
 
+export const instant = false;
+
 export default function VentasPage() {
   return (
     <RequiereSesion>

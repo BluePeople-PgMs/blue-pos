@@ -96,41 +96,68 @@ function PagoDentro({
   onCobrado: (aviso: string) => void;
 }) {
   const estado = useCheckoutElements();
+  const [correo, setCorreo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function pagar() {
     if (estado.type !== "success") return;
+    const email = correo.trim();
+    if (!email.includes("@") || !email.includes(".")) {
+      setError("Escribe un correo. Stripe lo pide para confirmar el cobro.");
+      return;
+    }
     setEnviando(true);
     setError(null);
-    const confirmacion = await estado.checkout.confirm({ redirect: "if_required" });
-    if (confirmacion.type === "error") {
+    try {
+      const confirmacion = await Promise.race([
+        estado.checkout.confirm({ redirect: "if_required", email }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(
+            () =>
+              reject(
+                new Error(
+                  "Stripe no terminó el cobro. Revisa la tarjeta y vuelve a pulsar.",
+                ),
+              ),
+            20000,
+          );
+        }),
+      ]);
+      if (confirmacion.type === "error") {
+        setError(confirmacion.error.message);
+        return;
+      }
+      const token = await tokenDeSesion();
+      const respuesta = await fetch("/api/stripe/confirmar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId: confirmacion.session.id }),
+      });
+      const cuerpo = (await respuesta.json().catch(() => null)) as {
+        error?: string;
+        facturaUrl?: string | null;
+      } | null;
+      if (!respuesta.ok) {
+        setError(cuerpo?.error ?? "Stripe cobró, pero la venta no se pudo cerrar.");
+        return;
+      }
+      const factura = cuerpo?.facturaUrl
+        ? ` Factura de Stripe: ${cuerpo.facturaUrl}. No sustituye un CFDI.`
+        : " El PDF de Stripe no es un CFDI.";
+      onCobrado(`Pago con tarjeta registrado.${factura}`);
+    } catch (errorCobro) {
+      setError(
+        errorCobro instanceof Error
+          ? errorCobro.message
+          : "No se pudo cobrar con tarjeta.",
+      );
+    } finally {
       setEnviando(false);
-      setError(confirmacion.error.message);
-      return;
     }
-    const token = await tokenDeSesion();
-    const respuesta = await fetch("/api/stripe/confirmar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ sessionId: confirmacion.session.id }),
-    });
-    const cuerpo = (await respuesta.json().catch(() => null)) as {
-      error?: string;
-      facturaUrl?: string | null;
-    } | null;
-    setEnviando(false);
-    if (!respuesta.ok) {
-      setError(cuerpo?.error ?? "Stripe cobró, pero la venta no se pudo cerrar.");
-      return;
-    }
-    const factura = cuerpo?.facturaUrl
-      ? ` Factura de Stripe: ${cuerpo.facturaUrl}. No sustituye un CFDI.`
-      : " El PDF de Stripe no es un CFDI.";
-    onCobrado(`Pago con tarjeta registrado.${factura}`);
   }
 
   if (estado.type === "loading") {
@@ -142,7 +169,24 @@ function PagoDentro({
 
   return (
     <div className="flex flex-col gap-3">
-      <PaymentElement />
+      <label className="flex flex-col gap-1 text-xs font-semibold text-ink">
+        Correo del cliente
+        <input
+          type="email"
+          name="correo"
+          autoComplete="email"
+          inputMode="email"
+          placeholder="cliente@correo.com"
+          value={correo}
+          onChange={(evento) => setCorreo(evento.target.value)}
+          className="rounded-xl border border-line bg-background px-3 py-2 text-base font-normal outline-none ring-olive/30 focus:border-olive focus:ring-2"
+        />
+      </label>
+      <PaymentElement
+        options={{
+          wallets: { link: "never", applePay: "never", googlePay: "never" },
+        }}
+      />
       {impuestoActivo ? (
         <p className="text-xs text-muted">
           El IVA va incluido en el precio del menú. Stripe Tax lo desglosa con el
@@ -157,7 +201,7 @@ function PagoDentro({
       {error ? <AvisoTarjeta texto={error} tono="error" /> : null}
       <button
         type="button"
-        disabled={disabled || enviando || !estado.checkout.canConfirm}
+        disabled={disabled || enviando}
         onClick={() => void pagar()}
         className="w-full rounded-xl bg-olive py-3.5 text-sm font-bold text-white shadow-sm disabled:opacity-50"
       >
