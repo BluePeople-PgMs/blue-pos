@@ -16,6 +16,12 @@ const ENLACES: EnlaceNav[] = [
   { href: "/", etiqueta: "Inicio", corto: "⌂", roles: ["cajero", "administrador"] },
   { href: "/ventas", etiqueta: "Vender", corto: "🧾", roles: ["cajero", "administrador"] },
   {
+    href: "/domicilio",
+    etiqueta: "Domicilio",
+    corto: "🛵",
+    roles: ["cajero", "administrador"],
+  },
+  {
     href: "/inventario",
     etiqueta: "Inventario",
     corto: "📦",

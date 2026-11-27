@@ -23,6 +23,13 @@ const ACCIONES: Accion[] = [
     roles: ["cajero", "administrador"],
   },
   {
+    href: "/domicilio/nuevo",
+    titulo: "Pedido a domicilio",
+    detalle: "Recibe el pedido y síguelo hasta la entrega.",
+    emoji: "🛵",
+    roles: ["cajero", "administrador"],
+  },
+  {
     href: "/catalogos",
     titulo: "Ver catálogo",
     detalle: "Comidas y productos de mostrador (solo consulta).",
@@ -67,7 +74,7 @@ export function InicioAcciones() {
         </h2>
         <p className="mt-1 text-sm text-muted">
           {rolActivo === "cajero"
-            ? "Como cajero puedes cobrar y consultar el catálogo. Inventario y reportes los ve administración."
+            ? "Como cajero puedes cobrar, tomar pedidos a domicilio y consultar el catálogo. Inventario y reportes los ve administración."
             : "Como administrador tienes acceso a inventario, cobros y cancelaciones."}{" "}
           {estado === "listo" ? (
             <span className="font-medium text-foreground">Rol: {etiqueta}.</span>

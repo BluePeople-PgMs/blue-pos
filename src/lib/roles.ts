@@ -24,6 +24,7 @@ const RUTAS_CAJERO = new Set([
 export function rutaPermitida(rol: RolSistema, pathname: string) {
   if (rol === "administrador") return true;
   if (RUTAS_CAJERO.has(pathname)) return true;
+  if (pathname === "/domicilio" || pathname.startsWith("/domicilio/")) return true;
   return pathname.startsWith("/catalogos/");
 }
 

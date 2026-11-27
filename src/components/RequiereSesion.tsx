@@ -77,8 +77,8 @@ export function RequiereSesion({ children }: { children: ReactNode }) {
         <section className="rounded-2xl border border-warn/30 bg-warn-soft px-5 py-4 text-warn">
           <h1 className="text-base font-semibold">Se necesita iniciar sesión</h1>
           <p className="mt-1 text-sm leading-6">
-            Inventario, ventas, pagos y cancelaciones solo se leen y escriben con
-            una sesión iniciada.
+            Domicilio, inventario, ventas, pagos y cancelaciones solo se leen y
+            escriben con una sesión iniciada.
           </p>
           <Link
             href={`/login?siguiente=${encodeURIComponent(pathname)}`}
