@@ -13,6 +13,9 @@ type CatalogoVentaCinepolisProps = {
   onAgregar: () => void;
   formatoMoneda: (monto: number) => string;
   procesando?: boolean;
+  tituloCatalogo?: string;
+  subtituloCatalogo?: string;
+  etiquetaAgregar?: string;
 };
 
 export function CatalogoVentaCinepolis({
@@ -24,6 +27,9 @@ export function CatalogoVentaCinepolis({
   onAgregar,
   formatoMoneda,
   procesando = false,
+  tituloCatalogo = "Selecciona tu pedido",
+  subtituloCatalogo = "Toca una tarjeta y confirma cantidad — listo para caja rápida.",
+  etiquetaAgregar = "Agregar",
 }: CatalogoVentaCinepolisProps) {
   const seleccionado = useMemo(
     () => articulos.find((a) => a.id === articuloId) ?? articulos[0],
@@ -50,10 +56,8 @@ export function CatalogoVentaCinepolis({
   return (
     <div className="cine-catalogo-panel shadow-sm">
       <header className="cine-catalogo-header px-5 py-4">
-        <h2 className="text-lg font-bold text-white">Selecciona tu pedido</h2>
-        <p className="text-sm text-white/75">
-          Toca una tarjeta y confirma cantidad — listo para caja rápida.
-        </p>
+        <h2 className="text-lg font-bold text-white">{tituloCatalogo}</h2>
+        <p className="text-sm text-white/75">{subtituloCatalogo}</p>
       </header>
 
       <div
@@ -165,7 +169,7 @@ export function CatalogoVentaCinepolis({
               onClick={onAgregar}
               className="cine-btn-primary min-h-11 px-6 text-sm"
             >
-              Agregar
+              {etiquetaAgregar}
             </button>
           </div>
         </footer>

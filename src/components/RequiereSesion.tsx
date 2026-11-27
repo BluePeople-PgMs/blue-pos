@@ -15,6 +15,7 @@ export function RequiereSesion({ children }: RequiereSesionProps) {
   const [session, setSession] = useState<Session | null | undefined>(() =>
     supabase ? undefined : null,
   );
+  const [resuelta, setResuelta] = useState(!supabase);
 
   useEffect(() => {
     if (!supabase) {
@@ -29,6 +30,7 @@ export function RequiereSesion({ children }: RequiereSesionProps) {
         return;
       }
       setSession(data.session);
+      setResuelta(true);
       if (!data.session) {
         router.replace("/login");
       }
@@ -38,6 +40,7 @@ export function RequiereSesion({ children }: RequiereSesionProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
+      setResuelta(true);
       if (!next) {
         router.replace("/login");
       }
@@ -50,14 +53,17 @@ export function RequiereSesion({ children }: RequiereSesionProps) {
   }, [router, supabase]);
 
   if (!session) {
-    return (
-      <section
-        role="status"
-        className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"
-      >
-        Revisando sesión…
-      </section>
-    );
+    if (!resuelta) {
+      return (
+        <section
+          role="status"
+          className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"
+        >
+          Revisando sesión…
+        </section>
+      );
+    }
+    return null;
   }
 
   return <>{children(session)}</>;

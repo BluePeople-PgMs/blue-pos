@@ -62,7 +62,8 @@ export function BarraSesion() {
     router.replace("/login");
   }
 
-  if (!supabase || !session || !rol) {
+  const enRepartidor = pathname.startsWith("/repartidor/");
+  if (pathname === "/login" || enRepartidor || !supabase || !session || !rol) {
     return null;
   }
 

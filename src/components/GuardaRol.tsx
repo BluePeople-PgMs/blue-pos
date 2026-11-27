@@ -15,6 +15,13 @@ function GuardaRolContenido({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { rol, cargando } = usePerfilRol();
+  const [rolListo, setRolListo] = useState(false);
+
+  useEffect(() => {
+    if (!cargando && rol) {
+      setRolListo(true);
+    }
+  }, [cargando, rol]);
 
   useEffect(() => {
     if (cargando || !rol || pathname === "/login") {
@@ -31,7 +38,7 @@ function GuardaRolContenido({ children }: { children: ReactNode }) {
     }
   }, [cargando, pathname, rol, router]);
 
-  if (pathname !== "/login" && cargando) {
+  if (pathname !== "/login" && cargando && !rolListo) {
     return (
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
         <p
@@ -39,6 +46,20 @@ function GuardaRolContenido({ children }: { children: ReactNode }) {
           className="brand-surface rounded-2xl px-5 py-4 text-sm text-muted"
         >
           Revisando rol…
+        </p>
+      </main>
+    );
+  }
+
+  if (
+    rol &&
+    pathname !== "/login" &&
+    !rutaPermitidaParaRol(rol, pathname)
+  ) {
+    return (
+      <main className="app-main">
+        <p role="status" className="text-sm text-muted">
+          Redirigiendo…
         </p>
       </main>
     );

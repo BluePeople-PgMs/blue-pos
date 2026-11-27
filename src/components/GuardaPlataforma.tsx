@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowser } from "@/lib/supabase";
-import { obtenerRolPerfil, ROL_MESERO } from "@/lib/roles";
+import { obtenerRolPerfil, ROL_CLIENTE } from "@/lib/roles";
 import { destinoSeguroParaRol } from "@/lib/rutas-por-rol";
 import { destinoSeguro } from "@/lib/rutas-protegidas";
 
@@ -24,6 +24,7 @@ export function GuardaPlataforma({ children }: GuardaPlataformaProps) {
   const [session, setSession] = useState<Session | null | undefined>(
     supabase ? undefined : null,
   );
+  const [sesionResuelta, setSesionResuelta] = useState(!supabase);
 
   useEffect(() => {
     if (!supabase) {
@@ -51,6 +52,12 @@ export function GuardaPlataforma({ children }: GuardaPlataformaProps) {
   }, [supabase]);
 
   useEffect(() => {
+    if (session !== undefined) {
+      setSesionResuelta(true);
+    }
+  }, [session]);
+
+  useEffect(() => {
     if (session === undefined) {
       return;
     }
@@ -66,30 +73,27 @@ export function GuardaPlataforma({ children }: GuardaPlataformaProps) {
 
     if (session && enLogin && supabase) {
       void obtenerRolPerfil(supabase, session.user.id).then((rol) => {
-        router.replace(destinoSeguroParaRol(next, rol ?? ROL_MESERO));
+        router.replace(destinoSeguroParaRol(next, rol ?? ROL_CLIENTE));
       });
     }
   }, [enLogin, next, pathname, router, session, supabase]);
 
-  /** En /login el formulario debe verse aunque getSession siga cargando. */
-  const esperando =
-    (!enLogin && session === undefined) ||
-    (!session && !enLogin) ||
-    Boolean(session && enLogin);
+  /** Solo la primera resolución de sesión en rutas protegidas; no ocultar hijos en /login. */
+  const pantallaDeCarga =
+    !enLogin && !sesionResuelta && session === undefined;
 
-  return (
-    <>
-      {esperando ? (
-        <main className="app-main">
-          <p
-            role="status"
-            className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"
-          >
-            Revisando sesión…
-          </p>
-        </main>
-      ) : null}
-      <div className={esperando ? "hidden" : "contents"}>{children}</div>
-    </>
-  );
+  if (pantallaDeCarga) {
+    return (
+      <main className="app-main">
+        <p
+          role="status"
+          className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-muted"
+        >
+          Revisando sesión…
+        </p>
+      </main>
+    );
+  }
+
+  return <>{children}</>;
 }
