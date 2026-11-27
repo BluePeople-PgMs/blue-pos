@@ -835,6 +835,87 @@ main .rounded-2xl.border.border-line.bg-card {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
+.repartidor-maps-dock {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.repartidor-btn-nav {
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--repartidor-top);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.repartidor-btn-nav--waze {
+  background: #33ccff;
+  color: #0a1931;
+}
+
+.repartidor-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid var(--repartidor-accent-soft);
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--repartidor-accent);
+  background: #fff;
+}
+
+.repartidor-ruta-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.repartidor-ruta-timeline__row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.repartidor-ruta-timeline__dot {
+  margin-top: 0.35rem;
+  height: 0.65rem;
+  width: 0.65rem;
+  shrink: 0;
+  border-radius: 999px;
+  background: var(--repartidor-top);
+  box-shadow: 0 0 0 3px var(--repartidor-accent-soft);
+}
+
+.repartidor-ruta-timeline__dot--dest {
+  background: var(--repartidor-accent);
+  box-shadow: 0 0 0 3px #ede9fe;
+}
+
+.repartidor-ruta-timeline__line {
+  margin-left: 0.3rem;
+  height: 1.25rem;
+  width: 2px;
+  background: linear-gradient(var(--repartidor-accent-soft), var(--repartidor-accent));
+  border-radius: 2px;
+}
+
+.repartidor-lista--compact .repartidor-parada {
+  padding: 0.65rem 0.75rem;
+}
+
+.repartidor-parada--solo-lectura {
+  cursor: default;
+}
+
 .repartidor-detalle-mapa {
   position: relative;
   min-height: 12rem;

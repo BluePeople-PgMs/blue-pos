@@ -1,7 +1,10 @@
 "use client";
 
+import { AvisoMaquetaDelivery } from "@/components/delivery/AvisoMaquetaDelivery";
 import { CatalogoVentaCinepolis } from "@/components/pos/CatalogoVentaCinepolis";
 import { cargarCatalogoDelivery } from "@/lib/delivery/catalogoCliente";
+import { deliverySoloMaqueta } from "@/lib/delivery/config";
+import { maquetaCargarCatalogo, maquetaCrearPedido } from "@/lib/delivery/maqueta";
 import type { ArticuloMenuVenta } from "@/lib/ventas/catalogoVentaVisual";
 import { PICKUP_TIENDA } from "@/lib/delivery/config";
 import {
@@ -47,10 +50,20 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
   const [mostrarCarrito, setMostrarCarrito] = useState(false);
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
   const [direccion, setDireccion] = useState("");
+  const [referencias, setReferencias] = useState("");
   const [confirmando, setConfirmando] = useState(false);
   const [pedidoConfirmado, setPedidoConfirmado] = useState<string | null>(null);
 
   const recargar = useCallback(async () => {
+    if (deliverySoloMaqueta()) {
+      setCargando(true);
+      setError(null);
+      const articulosMq = maquetaCargarCatalogo();
+      setArticulos(articulosMq);
+      setArticuloId(articulosMq[0]?.id ?? "");
+      setCargando(false);
+      return;
+    }
     if (!supabase) {
       setError("Falta configuración de Supabase.");
       setCargando(false);
@@ -136,10 +149,6 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
       setError("Agrega al menos un producto.");
       return;
     }
-    if (!supabase) {
-      return;
-    }
-
     setConfirmando(true);
     setError(null);
 
@@ -150,10 +159,29 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
       es_combo: l.esCombo,
     }));
 
+    if (deliverySoloMaqueta()) {
+      const { data } = maquetaCrearPedido(dir, items, referencias);
+      if (data?.id) {
+        setCarrito([]);
+        setMostrarCheckout(false);
+        setMostrarCarrito(false);
+        setConfirmando(false);
+        router.push(`/delivery/${data.id}`);
+      }
+      setConfirmando(false);
+      return;
+    }
+
+    if (!supabase) {
+      setConfirmando(false);
+      return;
+    }
+
     const { data, error: rpcError } = await deliveryCrearPedido(
       supabase,
       dir,
       items,
+      referencias,
     );
 
     if (rpcError) {
@@ -194,6 +222,7 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
 
   return (
     <div className="delivery-cliente mx-auto flex w-full max-w-lg flex-col gap-4 pb-28">
+      <AvisoMaquetaDelivery />
       <header className="delivery-cliente-hero px-1 pt-2">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
           Delivery
@@ -385,7 +414,18 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
                   value={direccion}
                   onChange={(e) => setDireccion(e.target.value)}
                   rows={3}
-                  placeholder="Calle, número, colonia, referencias…"
+                  placeholder="Calle, número, colonia…"
+                  className="mt-1 w-full rounded-xl border border-line bg-background px-3 py-2 text-sm"
+                />
+                <label className="mt-4 block text-sm font-medium">
+                  Referencias o notas adicionales
+                  <span className="font-normal text-muted"> (opcional)</span>
+                </label>
+                <textarea
+                  value={referencias}
+                  onChange={(e) => setReferencias(e.target.value)}
+                  rows={2}
+                  placeholder="Ej. casa azul, portón negro, timbre roto…"
                   className="mt-1 w-full rounded-xl border border-line bg-background px-3 py-2 text-sm"
                 />
                 <p className="mt-2 text-xs text-muted">

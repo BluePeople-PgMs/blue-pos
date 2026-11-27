@@ -1,3 +1,4 @@
+import { deliverySoloMaqueta } from "@/lib/delivery/config";
 import { destinoSeguro } from "@/lib/rutas-protegidas";
 import {
   ROL_ADMINISTRADOR,
@@ -22,6 +23,8 @@ const PREFIJOS_ADMIN = [
 
 const RUTAS_BLOQUEADAS_ADMIN = ["/pedidos", "/ventas", "/delivery", "/repartidor"];
 
+const PREFIJOS_DELIVERY_MAQUETA = ["/delivery", "/admin/delivery", "/repartidor"];
+
 function coincidePrefijo(pathname: string, prefijo: string): boolean {
   if (prefijo === "/") {
     return pathname === "/";
@@ -31,6 +34,13 @@ function coincidePrefijo(pathname: string, prefijo: string): boolean {
 
 export function rutaPermitidaParaRol(rol: RolPerfil, pathname: string): boolean {
   if (pathname === "/login") {
+    return true;
+  }
+
+  if (
+    deliverySoloMaqueta() &&
+    PREFIJOS_DELIVERY_MAQUETA.some((p) => coincidePrefijo(pathname, p))
+  ) {
     return true;
   }
 

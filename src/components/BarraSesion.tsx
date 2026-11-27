@@ -9,6 +9,7 @@ import {
   ROL_REPARTIDOR,
   rutaInicioPorRol,
 } from "@/lib/roles";
+import { deliverySoloMaqueta } from "@/lib/delivery/config";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -95,17 +96,30 @@ export function BarraSesion() {
           className="brand-nav-scroll flex w-full min-w-0 items-center gap-3 overflow-x-auto pb-0.5 text-sm sm:w-auto sm:flex-wrap sm:overflow-visible"
           aria-label="Módulos"
         >
-          {rol === ROL_CLIENTE ? (
+          {deliverySoloMaqueta() ? (
+            <>
+              <Link href="/delivery" className="font-medium">
+                Cliente
+              </Link>
+              <Link href="/admin/delivery" className="font-medium">
+                Mesero
+              </Link>
+              <Link href="/repartidor/delivery" className="font-medium">
+                Repartidor
+              </Link>
+            </>
+          ) : null}
+          {!deliverySoloMaqueta() && rol === ROL_CLIENTE ? (
             <Link href="/delivery" className="font-medium">
               Delivery
             </Link>
           ) : null}
-          {rol === ROL_REPARTIDOR ? (
+          {!deliverySoloMaqueta() && rol === ROL_REPARTIDOR ? (
             <Link href="/repartidor/delivery" className="font-medium">
               Entregas
             </Link>
           ) : null}
-          {rol === ROL_MESERO ? (
+          {!deliverySoloMaqueta() && rol === ROL_MESERO ? (
             <>
               <Link href="/pedidos" className="font-medium">
                 Pedidos
@@ -129,9 +143,11 @@ export function BarraSesion() {
               <Link href="/inventario" className="font-medium">
                 Inventario
               </Link>
-              <Link href="/admin/delivery" className="font-medium">
-                Delivery
-              </Link>
+              {!deliverySoloMaqueta() ? (
+                <Link href="/admin/delivery" className="font-medium">
+                  Delivery
+                </Link>
+              ) : null}
             </>
           ) : null}
           <span className="hidden text-white/80 md:inline">

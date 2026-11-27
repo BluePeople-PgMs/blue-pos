@@ -15,8 +15,20 @@ export type DeliveryOrderRow = {
   order_rating: number | null;
   driver_rating: number | null;
   folio: string | null;
+  delivery_notes: string | null;
   created_at: string;
   delivered_at: string | null;
+  driver?: { nombre: string | null } | null;
+  packer?: { nombre: string | null } | null;
+};
+
+export type DeliveryOrderDriverDisplay = {
+  order_id: string;
+  folio: string | null;
+  status: EstadoDelivery;
+  customer_id: string;
+  driver_id: string | null;
+  driver_nombre: string | null;
 };
 
 export type DeliveryOrderItemRow = {
@@ -27,6 +39,7 @@ export type DeliveryOrderItemRow = {
   precio_unitario: number;
   es_combo: boolean;
   is_packed: boolean;
+  notas: string | null;
   productos?: { nombre: string } | null;
 };
 
@@ -41,11 +54,21 @@ export async function deliveryCrearPedido(
   client: SupabaseClient,
   direccion: string,
   items: ItemCrearPedido[],
+  notas?: string | null,
 ) {
-  return client.rpc("delivery_crear_pedido", {
+  const params: {
+    p_direccion: string;
+    p_items: ItemCrearPedido[];
+    p_notas?: string;
+  } = {
     p_direccion: direccion,
     p_items: items,
-  });
+  };
+  const notasLimpias = notas?.trim();
+  if (notasLimpias) {
+    params.p_notas = notasLimpias;
+  }
+  return client.rpc("delivery_crear_pedido", params);
 }
 
 export async function deliveryIniciarEmpaque(
@@ -112,7 +135,13 @@ export async function obtenerPedido(
   client: SupabaseClient,
   orderId: string,
 ) {
-  return client.from("delivery_orders").select("*").eq("id", orderId).maybeSingle();
+  return client
+    .from("delivery_orders")
+    .select(
+      "*, driver:perfiles!delivery_orders_driver_id_fkey(nombre), packer:perfiles!delivery_orders_packer_id_fkey(nombre)",
+    )
+    .eq("id", orderId)
+    .maybeSingle();
 }
 
 export async function listarItemsPedido(client: SupabaseClient, orderId: string) {
@@ -122,13 +151,21 @@ export async function listarItemsPedido(client: SupabaseClient, orderId: string)
     .eq("delivery_order_id", orderId);
 }
 
+export type ListarPedidosOpsOpts = {
+  /** Activos: más antiguos primero (FIFO). Histórico: false = más recientes primero. */
+  ascending?: boolean;
+};
+
 export async function listarPedidosOps(
   client: SupabaseClient,
   statuses?: EstadoDelivery[],
+  opts?: ListarPedidosOpsOpts,
 ) {
-  let q = client.from("delivery_orders").select("*").order("created_at", {
-    ascending: false,
-  });
+  const ascending = opts?.ascending ?? false;
+  let q = client
+    .from("delivery_orders")
+    .select("*")
+    .order("created_at", { ascending });
   if (statuses?.length) {
     q = q.in("status", statuses);
   }
@@ -141,4 +178,26 @@ export async function listarPedidosRepartidor(client: SupabaseClient) {
     .select("*")
     .in("status", ["LISTO_PARA_PICKUP", "EN_CAMINO"])
     .order("created_at", { ascending: true });
+}
+
+/** Repartidor asignado y nombre (solo filas EN_CAMINO en la vista). */
+export async function obtenerRepartidorEnCamino(
+  client: SupabaseClient,
+  orderId: string,
+) {
+  return client
+    .from("delivery_order_driver_display")
+    .select("order_id, folio, status, driver_id, driver_nombre")
+    .eq("order_id", orderId)
+    .maybeSingle();
+}
+
+/** Entregas propias (RLS: solo ENTREGADO con driver_id = yo). */
+export async function listarHistoricoEntregasRepartidor(client: SupabaseClient) {
+  return client
+    .from("delivery_orders")
+    .select("id, folio, delivery_address, delivered_at, created_at")
+    .eq("status", "ENTREGADO")
+    .order("delivered_at", { ascending: false })
+    .limit(30);
 }

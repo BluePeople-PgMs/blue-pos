@@ -16,6 +16,24 @@ export const ETIQUETA_ESTADO: Record<EstadoDelivery, string> = {
   ENTREGADO: "Entregado",
 };
 
+/** Etiqueta de cierre en bandeja histórico (mesero/admin). */
+export const ETIQUETA_HISTORICO_ENTREGADO = "Finalizado y Entregado";
+
+export function etiquetaEstadoOps(
+  status: EstadoDelivery,
+  historico: boolean,
+): string {
+  if (historico && status === "ENTREGADO") {
+    return ETIQUETA_HISTORICO_ENTREGADO;
+  }
+  return ETIQUETA_ESTADO[status];
+}
+
+export function textoCalificacion(valor: number | null | undefined): string {
+  if (valor == null) return "No calificado";
+  return `${valor}★`;
+}
+
 export const ORDEN_PROGRESO: EstadoDelivery[] = [
   "PENDIENTE",
   "EMPACANDO",
