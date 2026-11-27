@@ -55,6 +55,15 @@ export const menuModulos: ItemMenu[] = [
     roles: ["cajero", "administrador"],
   },
   {
+    nombre: "Entregas",
+    href: "/entregas",
+    resumen:
+      "Pedidos a domicilio: recibir, cocina, reparto y cierre de entrega.",
+    tablas: ["entregas", "entrega_lineas"],
+    requiereSesion: true,
+    roles: ["cajero", "administrador"],
+  },
+  {
     nombre: "Pagos",
     href: "/pagos",
     resumen: "Cobra ventas abiertas y consulta historial de pagos.",

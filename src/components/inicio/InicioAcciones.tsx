@@ -23,6 +23,13 @@ const ACCIONES: Accion[] = [
     roles: ["cajero", "administrador"],
   },
   {
+    href: "/entregas",
+    titulo: "Entregas a domicilio",
+    detalle: "Recibe pedidos y avanza cocina y reparto.",
+    emoji: "🛵",
+    roles: ["cajero", "administrador"],
+  },
+  {
     href: "/catalogos",
     titulo: "Ver catálogo",
     detalle: "Comidas y productos de mostrador (solo consulta).",

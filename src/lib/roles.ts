@@ -16,6 +16,7 @@ const RUTAS_CAJERO = new Set([
   "/",
   "/login",
   "/ventas",
+  "/entregas",
   "/catalogos",
   "/catalogos/comidas",
   "/catalogos/productos",
