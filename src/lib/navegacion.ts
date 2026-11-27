@@ -55,6 +55,15 @@ export const menuModulos: ItemMenu[] = [
     roles: ["cajero", "administrador"],
   },
   {
+    nombre: "Delivery (cocina)",
+    href: "/delivery/cocina",
+    resumen:
+      "Cola de pedidos a domicilio (modo local sin Supabase hasta conectar BD).",
+    tablas: ["ventas"],
+    requiereSesion: true,
+    roles: ["cajero", "administrador"],
+  },
+  {
     nombre: "Pagos",
     href: "/pagos",
     resumen: "Cobra ventas abiertas y consulta historial de pagos.",

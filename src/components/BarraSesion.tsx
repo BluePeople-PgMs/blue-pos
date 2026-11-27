@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { LogoPizza } from "@/components/LogoPizza";
@@ -16,9 +16,11 @@ import { getSupabaseBrowser } from "@/lib/supabase";
 import { useMontado } from "@/lib/useMontado";
 
 export function BarraSesion() {
+  const pathname = usePathname();
   const router = useRouter();
   const montado = useMontado();
   const { estado: estadoRol, etiqueta: etiquetaRol } = useRol();
+  const ocultarEnDelivery = pathname.startsWith("/delivery");
   const [usuario, setUsuario] = useState<User | null>(null);
   const [sesionLocal, setSesionLocal] = useState<string | null>(null);
 
@@ -64,6 +66,10 @@ export function BarraSesion() {
     setSesionLocal(null);
     router.push("/login");
     router.refresh();
+  }
+
+  if (ocultarEnDelivery) {
+    return null;
   }
 
   return (

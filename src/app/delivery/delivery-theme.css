@@ -1,0 +1,32 @@
+.delivery-shell {
+  --delivery-bg: #f5f7f5;
+  --delivery-card: #ffffff;
+  --delivery-green: #4caf50;
+  --delivery-green-dark: #388e3c;
+  --delivery-text: #1a1a1a;
+  --delivery-muted: #5c6560;
+  --delivery-line: #e4ebe4;
+  --delivery-cta: #111111;
+}
+
+.delivery-shell {
+  min-height: 100dvh;
+  background: var(--delivery-bg);
+  color: var(--delivery-text);
+  font-family: var(--font-source), system-ui, sans-serif;
+}
+
+.delivery-chip-active {
+  background: var(--delivery-green);
+  color: #fff;
+}
+
+.delivery-btn-primary {
+  background: var(--delivery-cta);
+  color: #fff;
+}
+
+.delivery-btn-green {
+  background: var(--delivery-green);
+  color: #fff;
+}

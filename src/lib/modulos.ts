@@ -33,6 +33,17 @@ export const modulos: Modulo[] = [
     enlaces: [{ href: "/ventas", etiqueta: "Cobrar venta" }],
   },
   {
+    nombre: "Delivery",
+    resumen:
+      "Pedidos a domicilio: cliente en /delivery y cola de cocina con estados hasta entrega.",
+    tablas: ["ventas", "venta_lineas", "pagos"],
+    estado: "listo",
+    enlaces: [
+      { href: "/delivery", etiqueta: "Pedir a domicilio" },
+      { href: "/delivery/cocina", etiqueta: "Cocina delivery" },
+    ],
+  },
+  {
     nombre: "Inventario",
     resumen:
       "Existencias de insumos de cocina y productos empacados. Las salidas de venta aplican a los terminados.",

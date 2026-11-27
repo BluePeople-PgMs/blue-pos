@@ -35,6 +35,10 @@ export function NavMovilPrototipo() {
   const rolActivo = estado === "listo" ? rol : "cajero";
   const enlaces = ENLACES.filter((e) => e.roles.includes(rolActivo));
 
+  if (ruta.startsWith("/delivery")) {
+    return null;
+  }
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 px-2 py-2 backdrop-blur-sm md:hidden"

@@ -30,6 +30,13 @@ const ACCIONES: Accion[] = [
     roles: ["cajero", "administrador"],
   },
   {
+    href: "/delivery",
+    titulo: "Delivery a domicilio",
+    detalle: "Pedir desde el móvil y seguir hasta la entrega.",
+    emoji: "🛵",
+    roles: ["cajero", "administrador"],
+  },
+  {
     href: "/inventario",
     titulo: "Entrar mercancía",
     detalle: "Administración: suma existencia antes de vender.",

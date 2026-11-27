@@ -22,8 +22,12 @@ const RUTAS_CAJERO = new Set([
 ]);
 
 export function rutaPermitida(rol: RolSistema, pathname: string) {
+  if (pathname.startsWith("/delivery") && !pathname.startsWith("/delivery/cocina")) {
+    return true;
+  }
   if (rol === "administrador") return true;
   if (RUTAS_CAJERO.has(pathname)) return true;
+  if (pathname.startsWith("/delivery/cocina")) return true;
   return pathname.startsWith("/catalogos/");
 }
 
