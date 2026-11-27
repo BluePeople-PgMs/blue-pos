@@ -2,7 +2,7 @@
 
 import {
   obtenerRolPerfil,
-  ROL_MESERO,
+  ROL_CLIENTE,
   type RolPerfil,
 } from "@/lib/roles";
 import { getSupabaseBrowser } from "@/lib/supabase";
@@ -80,7 +80,7 @@ export function usePerfilRol(): PerfilRolContextValue {
   const ctx = useContext(PerfilRolContext);
   if (!ctx) {
     return {
-      rol: ROL_MESERO,
+      rol: ROL_CLIENTE,
       cargando: false,
       recargar: async () => {},
     };

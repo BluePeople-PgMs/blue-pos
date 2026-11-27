@@ -4,7 +4,13 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import { mensajeErrorAuth } from "@/lib/authErrores";
-import { obtenerRolPerfil, ROL_MESERO } from "@/lib/roles";
+import {
+  ROL_CLIENTE,
+  ROLES_REGISTRO,
+  etiquetaRolRegistro,
+  obtenerRolPerfil,
+  type RolRegistro,
+} from "@/lib/roles";
 import { destinoSeguroParaRol } from "@/lib/rutas-por-rol";
 import { destinoSeguro } from "@/lib/rutas-protegidas";
 import { MENSAJE_FALTAN_VARIABLES } from "@/lib/mensajes";
@@ -100,6 +106,8 @@ export function LoginForm() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [rolRegistro, setRolRegistro] = useState<RolRegistro>(ROL_CLIENTE);
+  const rolRegistroGroupId = useId();
 
   useEffect(() => {
     if (!supabase) {
@@ -161,6 +169,9 @@ export function LoginForm() {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: correo,
         password,
+        options: {
+          data: { rol_registro: rolRegistro },
+        },
       });
 
       if (signUpError) {
@@ -190,7 +201,7 @@ export function LoginForm() {
     const rol =
       userId != null
         ? await obtenerRolPerfil(supabase, userId)
-        : ROL_MESERO;
+        : ROL_CLIENTE;
     router.replace(destinoSeguroParaRol(next, rol));
     router.refresh();
     setEnviando(false);
@@ -297,7 +308,36 @@ export function LoginForm() {
                   Crear cuenta
                 </button>
               </div>
-            ) : null}
+            ) : (
+              <fieldset className="flex flex-col gap-2 border-0 p-0">
+                <legend className="text-sm font-medium text-foreground">
+                  Tipo de cuenta
+                </legend>
+                <div
+                  role="radiogroup"
+                  aria-labelledby={rolRegistroGroupId}
+                  id={rolRegistroGroupId}
+                  className="flex flex-col gap-2"
+                >
+                  {ROLES_REGISTRO.map((rol) => (
+                    <label
+                      key={rol}
+                      className="flex cursor-pointer items-start gap-2 rounded-lg border border-line bg-background px-3 py-2 text-sm has-[:checked]:border-brand-navy has-[:checked]:bg-accent-soft/40"
+                    >
+                      <input
+                        type="radio"
+                        name="rol_registro"
+                        value={rol}
+                        checked={rolRegistro === rol}
+                        onChange={() => setRolRegistro(rol)}
+                        className="mt-0.5 accent-[var(--brand-navy)]"
+                      />
+                      <span>{etiquetaRolRegistro(rol)}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
 
             {error ? (
               <p

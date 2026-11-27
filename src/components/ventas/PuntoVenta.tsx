@@ -5,6 +5,7 @@ import { PosLayout } from "@/components/pos/PosLayout";
 import { PosOperacionHeader } from "@/components/pos/PosOperacionHeader";
 import { TicketResumenVivo } from "@/components/pos/TicketResumenVivo";
 import { VentasRecientesPanel } from "@/components/pos/VentasRecientesPanel";
+import { ModalPagoStripe } from "@/components/ventas/ModalPagoStripe";
 import { TIPO_PRODUCTO_COMBO } from "@/lib/catalogo/productos";
 import {
   armarMenuVentaVisual,
@@ -23,6 +24,7 @@ import {
   type ComboParaVenta,
   type ProductoVentaResumen,
 } from "@/lib/ventas/combosEnVenta";
+import { stripePublicadoEnCliente } from "@/lib/stripe/cliente";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -166,6 +168,7 @@ export function PuntoVenta({ session }: { session: Session }) {
   const [articuloMenuId, setArticuloMenuId] = useState("");
   const [cantidadMenu, setCantidadMenu] = useState("1");
   const [metodoPago, setMetodoPago] = useState("efectivo");
+  const [pagoStripeAbierto, setPagoStripeAbierto] = useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState(false);
@@ -256,10 +259,7 @@ export function PuntoVenta({ session }: { session: Session }) {
         mapExistencias,
       );
       const combosVendibles = combos.filter(
-        (c) =>
-          c.componentes.length > 0 &&
-          c.precioUnitario != null &&
-          c.combosDisponibles > 0,
+        (c) => c.componentes.length > 0 && c.precioUnitario != null,
       );
 
       setCajas(listaCajas);
@@ -732,44 +732,14 @@ export function PuntoVenta({ session }: { session: Session }) {
     setExistencias((prev) => new Map(prev).set(productoIdActualizar, nueva));
   }
 
-  async function cobrarVenta(event: React.FormEvent) {
-    event.preventDefault();
-    setMensaje(null);
-    setError(null);
-
+  async function completarCobroEnSupabase(total: number, metodoRegistro: string) {
     if (!venta) {
-      setError("No hay venta abierta.");
       return;
     }
-    if (lineas.length === 0) {
-      setError("Agrega al menos una línea antes de cobrar.");
-      return;
-    }
-
-    const requerido = requerimientosInventario(
-      lineas,
-      tiposPorId,
-      componentesPorComboId,
-    );
-    for (const [productoInventarioId, necesario] of requerido) {
-      const stock = existencias.get(productoInventarioId) ?? 0;
-      if (stock < necesario) {
-        const nombre =
-          catalogoPorId.get(productoInventarioId)?.nombre ?? productoInventarioId;
-        setError(
-          `Stock insuficiente para ${nombre}. Necesario: ${necesario}, disponible: ${stock}.`,
-        );
-        return;
-      }
-    }
-
-    const total = venta.total;
-
-    setProcesando(true);
 
     const { error: pagoError } = await supabase.from("pagos").insert({
       venta_id: venta.id,
-      metodo: metodoPago.trim() || "efectivo",
+      metodo: metodoRegistro,
       monto: total,
     });
 
@@ -836,6 +806,59 @@ export function PuntoVenta({ session }: { session: Session }) {
     setVenta(null);
     setLineas([]);
     await recargarBase(true);
+  }
+
+  async function cobrarVenta(event: React.FormEvent) {
+    event.preventDefault();
+    setMensaje(null);
+    setError(null);
+
+    if (!venta) {
+      setError("No hay venta abierta.");
+      return;
+    }
+    if (lineas.length === 0) {
+      setError("Agrega al menos una línea antes de cobrar.");
+      return;
+    }
+
+    const requerido = requerimientosInventario(
+      lineas,
+      tiposPorId,
+      componentesPorComboId,
+    );
+    for (const [productoInventarioId, necesario] of requerido) {
+      const stock = existencias.get(productoInventarioId) ?? 0;
+      if (stock < necesario) {
+        const nombre =
+          catalogoPorId.get(productoInventarioId)?.nombre ?? productoInventarioId;
+        setError(
+          `Stock insuficiente para ${nombre}. Necesario: ${necesario}, disponible: ${stock}.`,
+        );
+        return;
+      }
+    }
+
+    const total = venta.total;
+    const metodo = metodoPago.trim() || "efectivo";
+
+    if (metodo === "tarjeta" && stripePublicadoEnCliente()) {
+      setPagoStripeAbierto(true);
+      return;
+    }
+
+    setProcesando(true);
+    await completarCobroEnSupabase(total, metodo);
+  }
+
+  async function alConfirmarStripe(paymentIntentId: string) {
+    if (!venta) {
+      return;
+    }
+    setPagoStripeAbierto(false);
+    setProcesando(true);
+    const metodo = `tarjeta (${paymentIntentId})`;
+    await completarCobroEnSupabase(venta.total, metodo);
   }
 
   function abrirModalCancelar(venta: VentaCobrada) {
@@ -1061,6 +1084,16 @@ export function PuntoVenta({ session }: { session: Session }) {
           />
         }
       />
+
+      {pagoStripeAbierto && venta ? (
+        <ModalPagoStripe
+          ventaId={venta.id}
+          montoMxn={venta.total}
+          formatoMoneda={formatoMoneda}
+          onExito={(id) => void alConfirmarStripe(id)}
+          onCerrar={() => setPagoStripeAbierto(false)}
+        />
+      ) : null}
 
       {cancelarModal ? (
         <div

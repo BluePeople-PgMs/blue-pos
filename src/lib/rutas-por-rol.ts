@@ -1,17 +1,26 @@
 import { destinoSeguro } from "@/lib/rutas-protegidas";
-import { ROL_MESERO, rutaInicioPorRol, type RolPerfil } from "@/lib/roles";
+import {
+  ROL_ADMINISTRADOR,
+  ROL_CLIENTE,
+  ROL_MESERO,
+  ROL_REPARTIDOR,
+  rutaInicioPorRol,
+  type RolPerfil,
+} from "@/lib/roles";
 
-const PREFIJOS_MESERO = ["/pedidos"];
-
+const PREFIJOS_CLIENTE = ["/delivery"];
+const PREFIJOS_MESERO = ["/pedidos", "/admin/delivery"];
+const PREFIJOS_REPARTIDOR = ["/repartidor"];
 const PREFIJOS_ADMIN = [
   "/",
   "/catalogos",
   "/inventario",
   "/combos",
   "/recetas",
+  "/admin/delivery",
 ];
 
-const RUTAS_BLOQUEADAS_ADMIN = ["/pedidos", "/ventas"];
+const RUTAS_BLOQUEADAS_ADMIN = ["/pedidos", "/ventas", "/delivery", "/repartidor"];
 
 function coincidePrefijo(pathname: string, prefijo: string): boolean {
   if (prefijo === "/") {
@@ -23,6 +32,14 @@ function coincidePrefijo(pathname: string, prefijo: string): boolean {
 export function rutaPermitidaParaRol(rol: RolPerfil, pathname: string): boolean {
   if (pathname === "/login") {
     return true;
+  }
+
+  if (rol === ROL_CLIENTE) {
+    return PREFIJOS_CLIENTE.some((p) => coincidePrefijo(pathname, p));
+  }
+
+  if (rol === ROL_REPARTIDOR) {
+    return PREFIJOS_REPARTIDOR.some((p) => coincidePrefijo(pathname, p));
   }
 
   if (rol === ROL_MESERO) {
@@ -51,5 +68,12 @@ export function debeRedirigirDesdeInicio(
   rol: RolPerfil,
   pathname: string,
 ): boolean {
-  return rol === ROL_MESERO && pathname === "/";
+  if (pathname !== "/") {
+    return false;
+  }
+  return (
+    rol === ROL_MESERO ||
+    rol === ROL_CLIENTE ||
+    rol === ROL_REPARTIDOR
+  );
 }

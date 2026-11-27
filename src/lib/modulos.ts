@@ -6,6 +6,8 @@ export type Modulo = {
   listo?: boolean;
   /** Solo visible para meseros (p. ej. POS fast food). */
   soloMesero?: boolean;
+  /** Operación delivery: mesero y administrador. */
+  deliveryOps?: boolean;
 };
 
 export const modulos: Modulo[] = [
@@ -16,6 +18,15 @@ export const modulos: Modulo[] = [
     tablas: ["categorias", "unidades", "productos", "cajas"],
     ruta: "/catalogos",
     listo: true,
+  },
+  {
+    nombre: "Delivery (operación)",
+    resumen:
+      "Empaque, checklist y histórico de pedidos a domicilio (en construcción).",
+    tablas: ["delivery_orders", "delivery_order_items"],
+    ruta: "/admin/delivery",
+    listo: false,
+    deliveryOps: true,
   },
   {
     nombre: "Pedidos",

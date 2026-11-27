@@ -3,7 +3,12 @@
 import { usePerfilRol } from "@/context/PerfilRolContext";
 import { EstadoConexion } from "@/components/EstadoConexion";
 import { modulos, type Modulo } from "@/lib/modulos";
-import { ROL_ADMINISTRADOR, ROL_MESERO } from "@/lib/roles";
+import {
+  ROL_ADMINISTRADOR,
+  ROL_MESERO,
+  etiquetaRol,
+  type RolPerfil,
+} from "@/lib/roles";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -23,8 +28,11 @@ function etiquetaModulo(modulo: Modulo) {
   return "Abrir módulo";
 }
 
-function modulosVisibles(rol: typeof ROL_MESERO | typeof ROL_ADMINISTRADOR) {
+function modulosVisibles(rol: RolPerfil) {
   return modulos.filter((m) => {
+    if (m.deliveryOps) {
+      return rol === ROL_MESERO || rol === ROL_ADMINISTRADOR;
+    }
     if (m.soloMesero) {
       return rol === ROL_MESERO;
     }
@@ -51,7 +59,7 @@ export function HomeContenido() {
     <main className="app-main">
       <header className="flex flex-col gap-3">
         <p className="brand-hero-eyebrow text-sm font-semibold tracking-[0.14em] uppercase">
-          {rol === ROL_MESERO ? "Mesero" : "Administración"}
+          {etiquetaRol(rol)}
         </p>
         <h1 className="brand-hero-title text-4xl font-semibold tracking-tight sm:text-5xl">
           Blue POS 2.0
