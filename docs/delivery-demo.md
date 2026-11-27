@@ -36,4 +36,10 @@ Modo actual: **sin Supabase** (`localStorage` + `sessionStorage`).
 - Dos dispositivos requieren después conectar Supabase.
 - POS clásico sigue en `/ventas`; enlace **POS** arriba en delivery.
 
+## Supabase (opcional)
+
+1. Migración `supabase/migrations/20261127120000_ventas_delivery.sql`
+2. Auth anónimo activado · checkout reutiliza `cobrarVenta` (inventario real)
+3. Sin migración: modo local automático
+
 Ver también [`desarrollo-local.md`](desarrollo-local.md).
