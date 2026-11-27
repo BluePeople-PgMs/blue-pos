@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  obtenerRolPerfil,
-  ROL_CLIENTE,
-  type RolPerfil,
-} from "@/lib/roles";
+import { obtenerRolEfectivo, ROL_CLIENTE, type RolPerfil } from "@/lib/roles";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -41,10 +37,10 @@ export function PerfilRolProvider({
       setCargando(false);
       return;
     }
-    const siguiente = await obtenerRolPerfil(supabase, session.user.id);
+    const siguiente = await obtenerRolEfectivo(supabase, session.user);
     setRol(siguiente);
     setCargando(false);
-  }, [session.user.id, supabase]);
+  }, [session.user, supabase]);
 
   useEffect(() => {
     let activo = true;
@@ -57,7 +53,7 @@ export function PerfilRolProvider({
         }
         return;
       }
-      const siguiente = await obtenerRolPerfil(supabase, session.user.id);
+      const siguiente = await obtenerRolEfectivo(supabase, session.user);
       if (activo) {
         setRol(siguiente);
         setCargando(false);
@@ -67,7 +63,7 @@ export function PerfilRolProvider({
     return () => {
       activo = false;
     };
-  }, [session.user.id, supabase]);
+  }, [session.user, supabase]);
 
   return (
     <PerfilRolContext.Provider value={{ rol, cargando, recargar }}>

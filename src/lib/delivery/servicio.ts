@@ -55,11 +55,14 @@ export async function deliveryCrearPedido(
   direccion: string,
   items: ItemCrearPedido[],
   notas?: string | null,
+  coords?: { lat: number; lng: number } | null,
 ) {
   const params: {
     p_direccion: string;
     p_items: ItemCrearPedido[];
     p_notas?: string;
+    p_lat?: number;
+    p_lng?: number;
   } = {
     p_direccion: direccion,
     p_items: items,
@@ -67,6 +70,10 @@ export async function deliveryCrearPedido(
   const notasLimpias = notas?.trim();
   if (notasLimpias) {
     params.p_notas = notasLimpias;
+  }
+  if (coords?.lat != null && coords?.lng != null) {
+    params.p_lat = coords.lat;
+    params.p_lng = coords.lng;
   }
   return client.rpc("delivery_crear_pedido", params);
 }

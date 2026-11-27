@@ -47,6 +47,7 @@ async function main() {
     await runSql(client, "supabase/migrations/20261127130000_delivery_enhancements.sql");
     await runSql(client, "supabase/migrations/20261127131000_delivery_repartidor_historico.sql");
     await runSql(client, "supabase/migrations/20261127132000_delivery_realtime.sql");
+    await runSql(client, "supabase/migrations/20261127133000_delivery_coordenadas.sql");
     console.log("✓ Migraciones delivery aplicadas");
   } finally {
     await client.end();

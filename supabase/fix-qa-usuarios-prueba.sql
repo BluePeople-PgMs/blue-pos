@@ -12,3 +12,15 @@ set rol = 'repartidor'
 from auth.users u
 where p.id = u.id
   and u.email = 'fer.repartidor.qa+271127@bluepeople.com';
+
+update public.perfiles p
+set rol = 'cliente'
+from auth.users u
+where p.id = u.id
+  and u.email = 'fjimenezcliente@bluepeople.com';
+
+update public.perfiles p
+set rol = 'cliente'
+from auth.users u
+where p.id = u.id
+  and u.email = 'fjimenezcliente_test@bluepeople.com';

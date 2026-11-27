@@ -8,7 +8,8 @@ import {
   ROL_CLIENTE,
   ROLES_REGISTRO,
   etiquetaRolRegistro,
-  obtenerRolPerfil,
+  intentarSincronizarRolDesdeRegistro,
+  obtenerRolEfectivo,
   type RolRegistro,
 } from "@/lib/roles";
 import { destinoSeguroParaRol } from "@/lib/rutas-por-rol";
@@ -120,7 +121,7 @@ export function LoginForm() {
       if (!activo || !session) {
         return;
       }
-      const rol = await obtenerRolPerfil(supabase, session.user.id);
+      const rol = await obtenerRolEfectivo(supabase, session.user);
       router.replace(destinoSeguroParaRol(next, rol));
     });
 
@@ -197,11 +198,11 @@ export function LoginForm() {
     }
 
     const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
-    const rol =
-      userId != null
-        ? await obtenerRolPerfil(supabase, userId)
-        : ROL_CLIENTE;
+    const user = sessionData.session?.user;
+    if (user) {
+      await intentarSincronizarRolDesdeRegistro(supabase, user);
+    }
+    const rol = user ? await obtenerRolEfectivo(supabase, user) : ROL_CLIENTE;
     router.replace(destinoSeguroParaRol(next, rol));
     router.refresh();
     setEnviando(false);

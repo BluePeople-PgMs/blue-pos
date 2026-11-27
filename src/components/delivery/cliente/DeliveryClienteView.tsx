@@ -11,6 +11,8 @@ import {
   filtrarArticulosMenu,
   type FiltroCatalogoTab,
 } from "@/lib/ventas/filtrosMenuCliente";
+import { SelectorPuntoMapa } from "@/components/delivery/cliente/SelectorPuntoMapa";
+import type { PuntoEntrega } from "@/lib/delivery/mapaEntrega";
 import { deliveryCrearPedido } from "@/lib/delivery/servicio";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -51,6 +53,7 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
   const [direccion, setDireccion] = useState("");
   const [referencias, setReferencias] = useState("");
+  const [puntoEntrega, setPuntoEntrega] = useState<PuntoEntrega | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [pedidoConfirmado, setPedidoConfirmado] = useState<string | null>(null);
 
@@ -145,6 +148,10 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
       setError("Escribe la dirección de entrega.");
       return;
     }
+    if (puntoEntrega == null) {
+      setError("Marca el punto de entrega en el mapa.");
+      return;
+    }
     if (carrito.length === 0) {
       setError("Agrega al menos un producto.");
       return;
@@ -160,7 +167,12 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
     }));
 
     if (deliverySoloMaqueta()) {
-      const { data } = maquetaCrearPedido(dir, items, referencias);
+      const { data } = maquetaCrearPedido(
+        dir,
+        items,
+        referencias,
+        puntoEntrega,
+      );
       if (data?.id) {
         setCarrito([]);
         setMostrarCheckout(false);
@@ -182,6 +194,7 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
       dir,
       items,
       referencias,
+      puntoEntrega,
     );
 
     if (rpcError) {
@@ -228,7 +241,7 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
           Delivery
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          ¿Qué te antojas?
+          ¿Qué se te antoja?
         </h1>
         <p className="mt-1 text-sm text-muted">
           Elige productos o combos; recogemos en {PICKUP_TIENDA.nombre} y te lo
@@ -417,6 +430,12 @@ export function DeliveryClienteView({ email }: { email?: string | null }) {
                   placeholder="Calle, número, colonia…"
                   className="mt-1 w-full rounded-xl border border-line bg-background px-3 py-2 text-sm"
                 />
+                <div className="mt-4">
+                  <SelectorPuntoMapa
+                    value={puntoEntrega}
+                    onChange={setPuntoEntrega}
+                  />
+                </div>
                 <label className="mt-4 block text-sm font-medium">
                   Referencias o notas adicionales
                   <span className="font-normal text-muted"> (opcional)</span>

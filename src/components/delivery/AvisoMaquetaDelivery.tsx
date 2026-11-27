@@ -1,10 +1,14 @@
 "use client";
 
+import { usePerfilRol } from "@/context/PerfilRolContext";
 import { deliverySoloMaqueta } from "@/lib/delivery/config";
 import { maquetaIdSeguimientoDemo, maquetaReiniciarDemo } from "@/lib/delivery/maqueta";
+import { ROL_CLIENTE, ROL_MESERO, ROL_REPARTIDOR } from "@/lib/roles";
 import Link from "next/link";
 
 export function AvisoMaquetaDelivery() {
+  const { rol } = usePerfilRol();
+
   if (!deliverySoloMaqueta()) {
     return null;
   }
@@ -18,41 +22,27 @@ export function AvisoMaquetaDelivery() {
         Modo maqueta — sin base de datos
       </p>
       <p className="mt-0.5 text-xs text-muted">
-        Los pedidos viven solo en esta sesión. Cambia de rol con la barra y prueba
-        cliente → mesero → repartidor.
+        Los pedidos viven solo en esta sesión. Para probar otro rol, cierra sesión
+        e inicia con una cuenta distinta (cliente, mesero o repartidor).
       </p>
       <div className="mt-2 flex flex-wrap gap-2 text-xs">
-        <Link
-          href="/delivery"
-          className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
-        >
-          Cliente
-        </Link>
-        <Link
-          href="/admin/delivery"
-          className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
-        >
-          Mesero
-        </Link>
-        <Link
-          href="/repartidor/delivery"
-          className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
-        >
-          Repartidor
-        </Link>
-        <Link
-          href={`/delivery/${maquetaIdSeguimientoDemo()}`}
-          className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
-        >
-          Seguimiento EN_CAMINO
-        </Link>
-        <button
-          type="button"
-          className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
-          onClick={() => maquetaReiniciarDemo()}
-        >
-          Reiniciar datos demo
-        </button>
+        {rol === ROL_CLIENTE ? (
+          <Link
+            href={`/delivery/${maquetaIdSeguimientoDemo()}`}
+            className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
+          >
+            Ver demo seguimiento EN_CAMINO
+          </Link>
+        ) : null}
+        {rol === ROL_MESERO || rol === ROL_REPARTIDOR || rol === ROL_CLIENTE ? (
+          <button
+            type="button"
+            className="rounded-full border border-line bg-card px-2.5 py-1 font-medium"
+            onClick={() => maquetaReiniciarDemo()}
+          >
+            Reiniciar datos demo
+          </button>
+        ) : null}
       </div>
     </div>
   );

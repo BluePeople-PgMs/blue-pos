@@ -8,6 +8,7 @@ import {
 } from "@/lib/delivery/estados";
 import { AvisoMaquetaDelivery } from "@/components/delivery/AvisoMaquetaDelivery";
 import { deliverySoloMaqueta } from "@/lib/delivery/config";
+import { formatoCoordenadas } from "@/lib/delivery/mapaEntrega";
 import {
   maquetaCalificar,
   maquetaListarItems,
@@ -284,6 +285,15 @@ export function DeliverySeguimientoView({
       <section className="cine-panel px-4 py-4">
         <h2 className="text-sm font-semibold">Entrega</h2>
         <p className="mt-1 text-sm text-muted">{pedido.delivery_address}</p>
+        {pedido.delivery_lat != null && pedido.delivery_lng != null ? (
+          <p className="mt-1 font-mono text-xs text-muted">
+            Punto en mapa:{" "}
+            {formatoCoordenadas({
+              lat: Number(pedido.delivery_lat),
+              lng: Number(pedido.delivery_lng),
+            })}
+          </p>
+        ) : null}
         {pedido.delivery_notes?.trim() ? (
           <p className="mt-2 text-sm">
             <span className="font-medium text-foreground">Referencias: </span>

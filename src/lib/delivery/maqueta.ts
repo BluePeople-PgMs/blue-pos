@@ -260,6 +260,7 @@ export function maquetaCrearPedido(
   direccion: string,
   items: ItemCrearPedido[],
   notas?: string | null,
+  coords?: { lat: number; lng: number } | null,
 ): { data: { id: string; folio: string } | null; error: null } {
   const id = `mq-ord-${Date.now()}`;
   const folio = folioNuevo();
@@ -269,6 +270,8 @@ export function maquetaCrearPedido(
     folio,
     delivery_address: direccion.trim(),
     delivery_notes: notas?.trim() || null,
+    delivery_lat: coords?.lat ?? null,
+    delivery_lng: coords?.lng ?? null,
     created_at: ahoraIso(0),
   });
   store.orders.unshift(order);

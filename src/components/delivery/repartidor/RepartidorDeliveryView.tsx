@@ -12,6 +12,10 @@ import {
   suscribirMaqueta,
 } from "@/lib/delivery/maqueta";
 import {
+  latLngAPorcentaje,
+  porcentajeTiendaPickup,
+} from "@/lib/delivery/mapaEntrega";
+import {
   urlGoogleMapsRuta,
   urlGoogleMapsTienda,
   urlWazeNavegacion,
@@ -195,6 +199,14 @@ export function RepartidorDeliveryView({ email }: { email?: string | null }) {
     const googleUrl = urlGoogleMapsRuta(destinoMaps);
     const wazeUrl = urlWazeNavegacion(destinoMaps);
     const enCurso = detalle.status === "EN_CAMINO";
+    const tiendaPos = porcentajeTiendaPickup();
+  const clientePos =
+      detalle.delivery_lat != null && detalle.delivery_lng != null
+        ? latLngAPorcentaje({
+            lat: Number(detalle.delivery_lat),
+            lng: Number(detalle.delivery_lng),
+          })
+        : { left: 78, top: 38 };
 
     return (
       <div className="repartidor-app">
@@ -237,16 +249,21 @@ export function RepartidorDeliveryView({ email }: { email?: string | null }) {
                 strokeDasharray="6 6"
               />
             </svg>
-            <span className="repartidor-mapa__origen">Tienda</span>
+            <span
+              className="repartidor-mapa__origen"
+              style={{ left: `${tiendaPos.left}%`, top: `${tiendaPos.top}%` }}
+            >
+              Tienda
+            </span>
             <span
               className="repartidor-mapa__pin"
-              style={{ left: "18%", top: "62%" }}
+              style={{ left: `${tiendaPos.left}%`, top: `${tiendaPos.top}%` }}
             >
               W
             </span>
             <span
               className="repartidor-mapa__pin repartidor-mapa__pin--activo"
-              style={{ left: "78%", top: "38%" }}
+              style={{ left: `${clientePos.left}%`, top: `${clientePos.top}%` }}
             >
               ★
             </span>

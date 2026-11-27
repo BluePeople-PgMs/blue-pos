@@ -1017,3 +1017,47 @@ main .rounded-2xl.border.border-line.bg-card {
 .delivery-cliente-bar > div {
   pointer-events: auto;
 }
+
+.delivery-mapa-picker__canvas {
+  margin-top: 0.75rem;
+  min-height: 11rem;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.delivery-mapa-picker__canvas--hit {
+  position: relative;
+}
+
+.delivery-mapa-picker__tiles {
+  min-height: 11rem;
+  background: linear-gradient(
+    165deg,
+    #e8f0ec 0%,
+    #d4e4de 45%,
+    #c5d6ce 100%
+  );
+}
+
+.delivery-mapa-picker__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.55;
+}
+
+.delivery-mapa-picker__etiqueta-tienda {
+  transform: translate(-50%, -120%);
+  white-space: nowrap;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delivery-mapa-picker__pin-cliente {
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
